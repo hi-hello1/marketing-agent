@@ -1,0 +1,51 @@
+{
+  "app_name": "Millibro",
+  "tagline": "Your reading identity, earned one book at a time",
+  "category": "Social Book Tracking & Gamified Reading Habit App",
+  "core_value_proposition": "A clean, visually elegant platform that allows readers to track their progress, build a reading identity through milestone badges, and share reading updates with a community.",
+  "description": "Millibro is a social reading platform — a place where readers track what they're reading, discover new books, and connect with other readers around their reading journeys. It brings the shared, book-club feel of talking about books with friends into an everyday app, rather than reading being something people do in isolation.",
+  "key_features": {
+    "gamified_reading_identity": {
+      "description": "Color-coded progression system based on total books read",
+      "tiers": {
+        "0_books": "Yellow",
+        "1_plus": "Blue",
+        "5_plus": "Green",
+        "15_plus": "Purple",
+        "30_plus": "Light Gray",
+        "50_plus": "Dark/Black"
+      },
+      "marketing_angle": "Gamification that turns reading into a visual achievement system without cluttering the aesthetic"
+    },
+    "reading_progress_tracking": {
+      "description": "Active progress tracker with exact page counts, completion percentages, visual progress bars, and quick 'Add Progress' button"
+    },
+    "visual_bookshelf": {
+      "description": "Completed book covers displayed in a clean grid view (Books Read shelf)"
+    },
+    "social_feed": {
+      "description": "Micro-journaling feed where users post reading updates with likes, comments, and sharing",
+      "profile_metrics": ["Books Read", "Following", "Followers", "Active Reading"]
+    },
+    "navigation": {
+      "bottom_bar": ["Home (Feed)", "Discover (Search)", "Books (Library)", "Profile (Stats)", "Alerts (Notifications)"]
+    }
+  },
+  "brand": {
+    "color_palette": "Soft cream/beige background, deep forest green primary accents, vibrant badge highlights",
+    "typography": "Classical serif headline font for literary feel + clean sans-serif UI text",
+    "overall_vibe": "Minimalist, aesthetic, thoughtful, uncluttered",
+    "primary_color": "#2d6a4f",
+    "background_color": "#faf3e0",
+    "accent_colors": ["#FFD700", "#4169E1", "#228B22", "#800080", "#C0C0C0", "#1a1a2e"]
+  },
+  "target_platforms": ["X (Twitter)", "Substack"],
+  "target_audience": "Book lovers, avid readers, book club members, literary community, reading habit builders, bookstagrammers, BookTok creators",
+  "unique_selling_points": [
+    "Reading identity you earn and show off",
+    "Social without being noisy — thoughtful micro-journaling",
+    "Beautiful minimalist design that feels premium",
+    "Gamification that motivates without being gimmicky",
+    "Community-driven book discovery"
+  ]
+}
