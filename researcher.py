@@ -1,4 +1,7 @@
-from .base_agent import BaseAgent
+try:
+    from .base_agent import BaseAgent
+except ImportError:
+    from base_agent import BaseAgent
 
 
 class ResearcherAgent(BaseAgent):

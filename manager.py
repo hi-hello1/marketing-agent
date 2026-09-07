@@ -1,17 +1,49 @@
 import json
 import os
+import sys
 import asyncio
 from pathlib import Path
 from datetime import datetime, timezone
 from google import genai
 from dotenv import load_dotenv
 
-load_dotenv(dotenv_path=Path(__file__).parent.parent / ".env")
+# Load .env (optional)
+_env_file = Path(__file__).parent / ".env"
+if not _env_file.exists():
+    _env_file = Path(__file__).parent.parent / ".env"
+if _env_file.exists():
+    load_dotenv(dotenv_path=_env_file)
 
-from .researcher import ResearcherAgent
-from .copywriter import CopywriterAgent
-from .planner import PlannerAgent
-from .base_agent import BaseAgent
+# Support both flat and package imports
+try:
+    from .researcher import ResearcherAgent
+    from .copywriter import CopywriterAgent
+    from .planner import PlannerAgent
+    from .base_agent import BaseAgent
+except ImportError:
+    from researcher import ResearcherAgent
+    from copywriter import CopywriterAgent
+    from planner import PlannerAgent
+    from base_agent import BaseAgent
+
+
+def _find_data_dir():
+    """Find the data directory — supports both flat and folder layouts."""
+    # Check for data/ subfolder first (local dev)
+    d = Path(__file__).parent.parent / "data"
+    if d.exists():
+        return d
+    d = Path(__file__).parent / "data"
+    if d.exists():
+        return d
+    # Flat layout: data files are next to this file or in parent
+    for candidate in [Path(__file__).parent, Path(__file__).parent.parent]:
+        if (candidate / "user_preferences.json").exists():
+            return candidate
+    # Fallback: create data/ next to server
+    fallback = Path(__file__).parent / "data"
+    fallback.mkdir(exist_ok=True)
+    return fallback
 
 
 class ManagerAgent(BaseAgent):
@@ -25,8 +57,7 @@ class ManagerAgent(BaseAgent):
         self.researcher = ResearcherAgent()
         self.copywriter = CopywriterAgent()
         self.planner = PlannerAgent()
-        self.data_dir = Path(__file__).parent.parent / "data"
-        self.data_dir.mkdir(exist_ok=True)
+        self.data_dir = _find_data_dir()
         self.preferences_file = self.data_dir / "user_preferences.json"
         self.score_file = self.data_dir / "score_history.json"
 

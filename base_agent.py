@@ -4,8 +4,8 @@ import asyncio
 from pathlib import Path
 from dotenv import load_dotenv
 
-# Load .env from the project root (optional - on Render, env vars are set directly)
-_env_file = Path(__file__).parent.parent / ".env"
+# Load .env (optional - on Render, env vars are set directly)
+_env_file = Path(__file__).parent / ".env"
 if _env_file.exists():
     load_dotenv(dotenv_path=_env_file)
 
@@ -21,22 +21,12 @@ class BaseAgent:
         api_key = os.environ.get("GEMINI_API_KEY")
         if not api_key or api_key.startswith("your_"):
             raise ValueError(
-                f"GEMINI_API_KEY is not set. Please update your .env file."
+                "GEMINI_API_KEY is not set. Please update your .env file or set the environment variable."
             )
         self.client = genai.Client(api_key=api_key)
 
     async def execute(self, input_data: str, context: dict, callback) -> str:
-        """Execute the agent's task with streaming output.
-        
-        Args:
-            input_data: The input text/prompt for this agent
-            context: Dict containing user_preferences and past scores
-            callback: Async function to emit SSE events
-            
-        Returns:
-            The full generated text content
-        """
-        # Build the prompt with system instruction + context + input
+        """Execute the agent's task with streaming output."""
         rework_note = ""
         if "rework_feedback" in context:
             rework_note = f"\n\n⚠️ REWORK REQUIRED: The manager reviewed your previous output and sent it back with this feedback:\n{context['rework_feedback']}\nPlease address ALL of the feedback points and improve your output significantly."
@@ -44,7 +34,7 @@ class BaseAgent:
         score_context = ""
         if "past_top_scores" in context:
             scores_summary = "\n".join(
-                [f"- Score {s.get('score', 'N/A')}/100: {s.get('reasoning', 'No details')}" 
+                [f"- Score {s.get('score', 'N/A')}/100: {s.get('reasoning', 'No details')}"
                  for s in context["past_top_scores"]]
             )
             best = context["past_top_scores"][0].get("score", 0) if context["past_top_scores"] else 0
@@ -70,14 +60,12 @@ class BaseAgent:
         full_content = ""
 
         try:
-            # Run the streaming call in a thread since the SDK is synchronous
             stream = await asyncio.to_thread(
                 self.client.models.generate_content_stream,
-                model='gemini-3.6-flash',
+                model='gemini-2.0-flash',
                 contents=prompt
             )
 
-            # Iterate over chunks (synchronous iterator from thread)
             for chunk in stream:
                 if chunk.text:
                     text_chunk = chunk.text
