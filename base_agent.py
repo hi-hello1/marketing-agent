@@ -62,7 +62,7 @@ class BaseAgent:
         try:
             stream = await asyncio.to_thread(
                 self.client.models.generate_content_stream,
-                model='gemini-2.0-flash',
+                model='gemini-3.6-flash',
                 contents=prompt
             )
 

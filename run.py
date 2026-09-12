@@ -4,6 +4,11 @@ import uvicorn
 from pathlib import Path
 from dotenv import load_dotenv
 
+# Ensure stdout uses UTF-8 on Windows to avoid UnicodeEncodeError
+if sys.stdout.encoding and sys.stdout.encoding.lower() != "utf-8":
+    import io
+    sys.stdout = io.TextIOWrapper(sys.stdout.buffer, encoding="utf-8", errors="replace")
+
 
 def main():
     env_path = Path(__file__).parent / ".env"
