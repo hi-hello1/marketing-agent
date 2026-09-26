@@ -64,6 +64,15 @@ app.add_middleware(
 )
 
 
+@app.on_event("startup")
+async def startup_check():
+    api_key = os.environ.get("GEMINI_API_KEY", "")
+    if api_key and not api_key.startswith("your_"):
+        print(f"✅ GEMINI_API_KEY is set ({len(api_key)} chars)")
+    else:
+        print("❌ WARNING: GEMINI_API_KEY is NOT set! Agents will fail.")
+
+
 class ChatRequest(BaseModel):
     message: str
 
