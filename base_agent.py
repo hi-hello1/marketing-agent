@@ -28,16 +28,20 @@ class BaseAgent:
         self.client = genai.Client(api_key=api_key)
 
     async def execute(self, input_data: str, context: dict, callback) -> str:
-        """Execute the agent's task with streaming output."""
+        """Execute the agent's task with streaming output and transient-error retries."""
         rework_note = ""
         if "rework_feedback" in context:
-            rework_note = f"\n\n⚠️ REWORK REQUIRED: The manager reviewed your previous output and sent it back with this feedback:\n{context['rework_feedback']}\nPlease address ALL of the feedback points and improve your output significantly."
+            rework_note = (
+                "\n\n⚠️ REWORK REQUIRED: The manager reviewed your previous output and sent it back "
+                f"with this feedback:\n{context['rework_feedback']}\n"
+                "Please address ALL of the feedback points and improve your output significantly."
+            )
 
         score_context = ""
         if "past_top_scores" in context:
             scores_summary = "\n".join(
-                [f"- Score {s.get('score', 'N/A')}/100: {s.get('reasoning', 'No details')}"
-                 for s in context["past_top_scores"]]
+                f"- Score {s.get('score', 'N/A')}/100: {s.get('reasoning', 'No details')}"
+                for s in context["past_top_scores"]
             )
             best = context["past_top_scores"][0].get("score", 0) if context["past_top_scores"] else 0
             score_context = f"\n\n📊 PAST PERFORMANCE (aim to beat {best}/100):\n{scores_summary}"
@@ -55,39 +59,57 @@ class BaseAgent:
             "data": {
                 "agent": self.name,
                 "status": "active",
-                "message": f"{self.role} is working..."
-            }
+                "message": f"{self.role} is working...",
+            },
         })
 
         full_content = ""
-
         try:
-            stream = await asyncio.to_thread(
-                self.client.models.generate_content_stream,
-                model='gemini-3.6-flash',
-                contents=prompt
-            )
-
-            for chunk in stream:
-                if chunk.text:
-                    text_chunk = chunk.text
-                    full_content += text_chunk
+            for attempt in range(4):
+                try:
+                    stream = await asyncio.to_thread(
+                        self.client.models.generate_content_stream,
+                        model="gemini-3.5-flash",
+                        contents=prompt,
+                    )
+                    for chunk in stream:
+                        if chunk.text:
+                            text_chunk = chunk.text
+                            full_content += text_chunk
+                            await callback({
+                                "event": "agent_chunk",
+                                "data": {"agent": self.name, "delta": text_chunk},
+                            })
+                    break
+                except Exception as exc:
+                    error_text = str(exc)
+                    retryable = (
+                        any(token in error_text for token in (
+                            "503", "UNAVAILABLE", "429", "RESOURCE_EXHAUSTED"
+                        )) or "timeout" in error_text.lower()
+                    )
+                    if not retryable or attempt == 3:
+                        raise
+                    delay = 2 ** attempt
                     await callback({
-                        "event": "agent_chunk",
-                        "data": {"agent": self.name, "delta": text_chunk}
+                        "event": "workflow_step",
+                        "data": {
+                            "agent": self.name,
+                            "status": "retrying",
+                            "message": f"Gemini temporarily unavailable; retrying in {delay}s...",
+                        },
                     })
-
+                    await asyncio.sleep(delay)
         except Exception as e:
             error_msg = f"Error during {self.name} execution: {str(e)}"
             full_content = error_msg
             await callback({
                 "event": "agent_chunk",
-                "data": {"agent": self.name, "delta": f"\n\n❌ {error_msg}"}
+                "data": {"agent": self.name, "delta": f"\n\n❌ {error_msg}"},
             })
 
         await callback({
             "event": "agent_complete",
-            "data": {"agent": self.name, "content": full_content}
+            "data": {"agent": self.name, "content": full_content},
         })
-
         return full_content
