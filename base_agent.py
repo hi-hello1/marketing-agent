@@ -20,12 +20,22 @@ class BaseAgent:
         self.role = role
         self.system_prompt = system_prompt
         self.color = color
+        self.model = "gemini-3.6-flash"
+        self.max_retries = 3
         api_key = os.environ.get("GEMINI_API_KEY")
         if not api_key or api_key.startswith("your_"):
             raise ValueError(
                 "GEMINI_API_KEY is not set. Please update your .env file or set the environment variable."
             )
         self.client = genai.Client(api_key=api_key)
+
+    @staticmethod
+    def _is_retryable_error(error: Exception) -> bool:
+        message = str(error).upper()
+        return any(
+            token in message
+            for token in ["503", "UNAVAILABLE", "RESOURCE_EXHAUSTED", "DEADLINE_EXCEEDED", "TIMEOUT"]
+        )
 
     async def execute(self, input_data: str, context: dict, callback) -> str:
         """Execute the agent's task with streaming output."""
@@ -62,20 +72,42 @@ class BaseAgent:
         full_content = ""
 
         try:
-            stream = await asyncio.to_thread(
-                self.client.models.generate_content_stream,
-                model='gemini-3.6-flash',
-                contents=prompt
-            )
+            for attempt in range(1, self.max_retries + 1):
+                attempt_had_output = False
+                try:
+                    stream = await asyncio.to_thread(
+                        self.client.models.generate_content_stream,
+                        model=self.model,
+                        contents=prompt
+                    )
 
-            for chunk in stream:
-                if chunk.text:
-                    text_chunk = chunk.text
-                    full_content += text_chunk
-                    await callback({
-                        "event": "agent_chunk",
-                        "data": {"agent": self.name, "delta": text_chunk}
-                    })
+                    for chunk in stream:
+                        if chunk.text:
+                            text_chunk = chunk.text
+                            full_content += text_chunk
+                            attempt_had_output = True
+                            await callback({
+                                "event": "agent_chunk",
+                                "data": {"agent": self.name, "delta": text_chunk}
+                            })
+                    break
+                except Exception as e:
+                    is_retryable = self._is_retryable_error(e)
+                    can_retry = attempt < self.max_retries and is_retryable and not attempt_had_output
+
+                    if can_retry:
+                        delay_seconds = min(2 ** (attempt - 1), 6)
+                        await callback({
+                            "event": "workflow_step",
+                            "data": {
+                                "agent": self.name,
+                                "status": "retrying",
+                                "message": f"{self.role} hit temporary model limits; retrying in {delay_seconds}s (attempt {attempt}/{self.max_retries})..."
+                            }
+                        })
+                        await asyncio.sleep(delay_seconds)
+                        continue
+                    raise
 
         except Exception as e:
             error_msg = f"Error during {self.name} execution: {str(e)}"
