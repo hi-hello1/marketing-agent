@@ -1,5 +1,7 @@
 # Millibro Marketing Agent - Render Deployment
 
+The marketing pipeline generates coordinated campaign ideas for X (Twitter), Substack, YouTube, Instagram, and SEO.
+
 ## Quick Deploy to Render
 
 ### Option 1: One-Click Deploy (after pushing to GitHub)
