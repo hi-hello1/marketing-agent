@@ -79,12 +79,21 @@ class ManagerAgent(BaseAgent):
 
     async def _call_gemini(self, prompt: str) -> str:
         """Helper to call Gemini synchronously in a thread and return text."""
-        response = await asyncio.to_thread(
-            self.client.models.generate_content,
-            model='gemini-3.6-flash',
-            contents=prompt
-        )
-        return response.text if response.text else ""
+        last_error = None
+        for attempt in range(1, self.max_retries + 1):
+            try:
+                response = await asyncio.to_thread(
+                    self.client.models.generate_content,
+                    model=self.model,
+                    contents=prompt
+                )
+                return response.text if response.text else ""
+            except Exception as e:
+                last_error = e
+                if attempt >= self.max_retries or not self._is_retryable_error(e):
+                    break
+                await asyncio.sleep(min(2 ** (attempt - 1), 6))
+        raise last_error
 
     def _parse_json_response(self, text: str, fallback: dict) -> dict:
         """Extract JSON from a Gemini response that may contain markdown fences."""
