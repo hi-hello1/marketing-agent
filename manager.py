@@ -166,7 +166,7 @@ class ManagerAgent(BaseAgent):
 
 Review the following outputs for:
 1. **Brand Alignment**: Does the content match Millibro's brand? (minimalist, literary, warm, forest green & cream aesthetic)
-2. **Platform Optimization**: Is the X post optimized for X's algorithm? Is the Substack post structured for newsletter best practices?
+2. **Platform Optimization**: Are the X, Substack, YouTube, Instagram, and SEO deliverables each optimized for their channel?
 3. **CTA Effectiveness**: Are the calls-to-action compelling but not pushy?
 4. **Content Quality**: Is the writing sharp, engaging, and free of clichés?
 5. **Strategic Coherence**: Does the plan make sense with the content?
@@ -269,7 +269,7 @@ Respond ONLY in this JSON format:
 Score based on these criteria (each out of 25):
 1. **Content Quality** (25pts): Writing quality, creativity, engagement hooks
 2. **Brand Alignment** (25pts): Matches Millibro's minimalist, literary, warm voice
-3. **Platform Optimization** (25pts): X post is optimized for X, Substack for newsletters
+3. **Platform Optimization** (25pts): Each X, Substack, YouTube, Instagram, and SEO deliverable follows channel best practices
 4. **Conversion Potential** (25pts): Likelihood of converting readers into Millibro users
 
 --- COPYWRITER OUTPUT ---

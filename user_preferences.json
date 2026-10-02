@@ -39,7 +39,7 @@
     "background_color": "#faf3e0",
     "accent_colors": ["#FFD700", "#4169E1", "#228B22", "#800080", "#C0C0C0", "#1a1a2e"]
   },
-  "target_platforms": ["X (Twitter)", "Substack"],
+  "target_platforms": ["X (Twitter)", "Substack", "YouTube", "Instagram", "SEO"],
   "target_audience": "Book lovers, avid readers, book club members, literary community, reading habit builders, bookstagrammers, BookTok creators",
   "unique_selling_points": [
     "Reading identity you earn and show off",
