@@ -2,8 +2,8 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <meta name="description" content="Multi-agent AI marketing system for Millibro - generates channel-specific content for X, Substack, YouTube, Instagram, and SEO">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <meta name="description" content="Multi-agent AI marketing system for Millibro - generates platform-specific content for X and Substack">
     <title>Millibro Marketing Agent | AI-Powered Content Pipeline</title>
     <!-- Google Fonts -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -24,6 +24,18 @@
             Score History
         </button>
     </header>
+
+    <!-- Mobile Tab Navigation -->
+    <nav class="mobile-tabs" id="mobileTabs">
+        <button class="mobile-tab active" data-panel="chat">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15a2 2 0 01-2 2H7l-4 4V5a2 2 0 012-2h14a2 2 0 012 2z"></path></svg>
+            Chat
+        </button>
+        <button class="mobile-tab" data-panel="pipeline">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z"></path></svg>
+            Pipeline
+        </button>
+    </nav>
 
     <main class="app-layout">
         <!-- Left Panel: Chat Interface -->

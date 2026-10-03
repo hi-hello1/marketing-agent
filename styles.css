@@ -663,6 +663,12 @@ code, pre {
     100% { opacity: 1; }
 }
 
+/* ===== Mobile Tab Navigation (hidden on desktop) ===== */
+.mobile-tabs {
+    display: none;
+}
+
+/* ===== Tablet Breakpoint (≤1024px) ===== */
 @media (max-width: 1024px) {
     .app-layout {
         flex-direction: column;
@@ -670,5 +676,523 @@ code, pre {
     .chat-panel {
         border-right: none;
         border-bottom: 1px solid var(--border);
+        flex: 1;
+    }
+    .pipeline-panel {
+        flex: 1;
+    }
+
+    .app-header {
+        height: 60px;
+        padding: 0 20px;
+    }
+
+    .logo h1 {
+        font-size: 1.25rem;
+    }
+
+    .chat-history {
+        padding: 20px;
+        gap: 16px;
+    }
+
+    .chat-message {
+        max-width: 90%;
+    }
+
+    .input-area {
+        padding: 16px;
+    }
+
+    .pipeline-panel {
+        padding: 20px;
+    }
+
+    .step-card {
+        margin-left: 36px;
+    }
+
+    .step-connector {
+        left: 18px;
     }
 }
+
+/* ===== Mobile Breakpoint (≤768px) ===== */
+@media (max-width: 768px) {
+    /* Show mobile tab navigation */
+    .mobile-tabs {
+        display: flex;
+        background: var(--bg-secondary);
+        border-bottom: 1px solid var(--border);
+        z-index: 99;
+        flex-shrink: 0;
+    }
+
+    .mobile-tab {
+        flex: 1;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 6px;
+        padding: 12px 0;
+        background: none;
+        border: none;
+        border-bottom: 2px solid transparent;
+        color: var(--text-muted);
+        font-family: var(--font-body);
+        font-size: 0.85rem;
+        font-weight: 500;
+        cursor: pointer;
+        transition: all 0.3s ease;
+        -webkit-tap-highlight-color: transparent;
+    }
+
+    .mobile-tab.active {
+        color: var(--text-primary);
+        border-bottom-color: var(--manager-color);
+    }
+
+    .mobile-tab svg {
+        flex-shrink: 0;
+    }
+
+    /* Tab-based panel switching */
+    .app-layout {
+        flex-direction: column;
+        position: relative;
+    }
+
+    .chat-panel {
+        border-right: none;
+        border-bottom: none;
+        flex: 1;
+        min-height: 0;
+    }
+
+    .pipeline-panel {
+        flex: 1;
+        min-height: 0;
+    }
+
+    .chat-panel.mobile-hidden,
+    .pipeline-panel.mobile-hidden {
+        display: none !important;
+    }
+
+    /* Header compact */
+    .app-header {
+        height: 54px;
+        padding: 0 16px;
+    }
+
+    .logo h1 {
+        font-size: 1.1rem;
+    }
+
+    .book-icon {
+        font-size: 20px;
+    }
+
+    .logo {
+        gap: 8px;
+    }
+
+    .score-history-btn {
+        padding: 6px 12px;
+        font-size: 0.8rem;
+        gap: 4px;
+    }
+
+    .score-history-btn svg {
+        width: 16px;
+        height: 16px;
+    }
+
+    /* Chat panel mobile */
+    .chat-history {
+        padding: 16px;
+        gap: 12px;
+    }
+
+    .chat-message {
+        max-width: 95%;
+    }
+
+    .chat-message.user .message-content {
+        padding: 12px 16px;
+        border-radius: 14px 14px 4px 14px;
+    }
+
+    .chat-message.agent .message-content {
+        padding: 16px;
+        border-radius: 14px 14px 14px 4px;
+        box-shadow: 0 4px 16px rgba(0, 0, 0, 0.15);
+    }
+
+    .input-area {
+        padding: 12px;
+        background: var(--bg-secondary);
+    }
+
+    #userInput {
+        padding: 14px 52px 14px 16px;
+        font-size: 0.95rem;
+        min-height: 50px;
+        border-radius: 10px;
+        box-shadow: 0 4px 16px rgba(0, 0, 0, 0.15);
+    }
+
+    .send-btn {
+        right: 24px;
+        bottom: 23px;
+        width: 34px;
+        height: 34px;
+    }
+
+    /* Pipeline panel mobile */
+    .pipeline-panel {
+        padding: 16px;
+    }
+
+    .panel-title {
+        font-size: 1.1rem;
+        margin-bottom: 16px;
+    }
+
+    .pipeline-container {
+        gap: 16px;
+    }
+
+    .step-card {
+        margin-left: 0;
+        border-radius: 10px;
+    }
+
+    .step-connector {
+        display: none;
+    }
+
+    .step-header {
+        padding: 14px 16px;
+        gap: 8px;
+    }
+
+    .step-icon {
+        font-size: 1.1rem;
+    }
+
+    .step-header h3 {
+        font-size: 0.9rem;
+    }
+
+    .step-status {
+        font-size: 0.7rem;
+    }
+
+    .step-time {
+        font-size: 0.7rem;
+    }
+
+    .step-content {
+        padding: 0 16px;
+    }
+
+    .pipeline-step.active .step-content {
+        padding: 0 16px 16px 16px;
+        max-height: 300px;
+    }
+
+    .streaming-text {
+        font-size: 0.8rem;
+    }
+
+    /* Score display mobile */
+    .score-display {
+        margin-top: 24px;
+        padding: 20px;
+        border-radius: 12px;
+    }
+
+    .score-gauge-container {
+        width: 120px;
+        height: 120px;
+    }
+
+    .score-value {
+        font-size: 2.25rem;
+    }
+
+    .score-reasoning {
+        font-size: 0.85rem;
+    }
+
+    /* Modal mobile */
+    .modal-content {
+        width: 95%;
+        max-height: 85vh;
+        border-radius: 12px;
+    }
+
+    .modal-header {
+        padding: 16px;
+    }
+
+    .modal-header h2 {
+        font-size: 1.1rem;
+    }
+
+    .modal-body {
+        padding: 16px;
+    }
+
+    .history-table th,
+    .history-table td {
+        padding: 10px 8px;
+        font-size: 0.85rem;
+    }
+
+    .history-table th {
+        font-size: 0.75rem;
+    }
+
+    /* Markdown adjustments */
+    .markdown-output {
+        font-size: 0.9rem;
+        line-height: 1.5;
+    }
+
+    .markdown-output pre {
+        padding: 10px;
+        font-size: 0.8rem;
+    }
+
+    .markdown-output ul, .markdown-output ol {
+        padding-left: 16px;
+    }
+
+    /* Final output cards mobile */
+    .final-output details {
+        padding: 12px;
+    }
+
+    .error-message {
+        padding: 12px;
+        font-size: 0.9rem;
+    }
+}
+
+/* ===== Small Phone Breakpoint (≤480px) ===== */
+@media (max-width: 480px) {
+    .app-header {
+        height: 48px;
+        padding: 0 12px;
+    }
+
+    .logo h1 {
+        font-size: 0.95rem;
+        letter-spacing: 0;
+    }
+
+    .book-icon {
+        font-size: 18px;
+    }
+
+    .score-history-btn {
+        padding: 5px 8px;
+        font-size: 0.75rem;
+        border-radius: 6px;
+    }
+
+    .score-history-btn svg {
+        width: 14px;
+        height: 14px;
+    }
+
+    .mobile-tab {
+        padding: 10px 0;
+        font-size: 0.8rem;
+    }
+
+    .chat-history {
+        padding: 12px;
+        gap: 10px;
+    }
+
+    .chat-message {
+        max-width: 100%;
+    }
+
+    .chat-message.user .message-content {
+        padding: 10px 14px;
+    }
+
+    .chat-message.agent .message-content {
+        padding: 14px;
+    }
+
+    .input-area {
+        padding: 10px;
+    }
+
+    #userInput {
+        padding: 12px 48px 12px 14px;
+        font-size: 0.9rem;
+        min-height: 46px;
+        border-radius: 8px;
+    }
+
+    .send-btn {
+        right: 20px;
+        bottom: 20px;
+        width: 32px;
+        height: 32px;
+        border-radius: 6px;
+    }
+
+    .pipeline-panel {
+        padding: 12px;
+    }
+
+    .panel-title {
+        font-size: 1rem;
+        margin-bottom: 12px;
+    }
+
+    .pipeline-container {
+        gap: 12px;
+    }
+
+    .step-header {
+        padding: 12px 14px;
+        gap: 6px;
+    }
+
+    .step-icon {
+        font-size: 1rem;
+    }
+
+    .step-header h3 {
+        font-size: 0.85rem;
+    }
+
+    .score-gauge-container {
+        width: 100px;
+        height: 100px;
+    }
+
+    .score-value {
+        font-size: 1.8rem;
+    }
+
+    .score-display {
+        padding: 16px;
+    }
+
+    /* Make modal full-screen on very small phones */
+    .modal-content {
+        width: 100%;
+        max-height: 100vh;
+        height: 100%;
+        border-radius: 0;
+    }
+
+    .history-table th,
+    .history-table td {
+        padding: 8px 6px;
+        font-size: 0.8rem;
+    }
+
+    /* Hide less important table columns on tiny screens */
+    .history-table th:nth-child(4),
+    .history-table td:nth-child(4) {
+        display: none;
+    }
+
+    .markdown-output {
+        font-size: 0.85rem;
+    }
+}
+
+/* ===== Touch & Interaction Improvements ===== */
+@media (hover: none) and (pointer: coarse) {
+    /* Larger touch targets */
+    .send-btn {
+        width: 40px;
+        height: 40px;
+    }
+
+    .score-history-btn {
+        min-height: 40px;
+    }
+
+    .step-header {
+        min-height: 52px;
+    }
+
+    .icon-btn {
+        min-width: 40px;
+        min-height: 40px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+    }
+
+    .mobile-tab {
+        min-height: 48px;
+    }
+
+    /* Remove hover effects that cause sticky states on touch */
+    .score-history-btn:hover {
+        background: var(--surface);
+        border-color: var(--border);
+    }
+
+    .send-btn:not(:disabled):hover {
+        transform: none;
+        box-shadow: none;
+    }
+}
+
+/* ===== Landscape orientation on mobile ===== */
+@media (max-width: 768px) and (orientation: landscape) {
+    .app-header {
+        height: 42px;
+    }
+
+    .mobile-tabs {
+        position: sticky;
+        top: 0;
+    }
+
+    .mobile-tab {
+        padding: 8px 0;
+        font-size: 0.8rem;
+    }
+
+    .chat-history {
+        padding: 10px 16px;
+    }
+
+    .input-area {
+        padding: 8px 12px;
+    }
+
+    #userInput {
+        min-height: 40px;
+        max-height: 80px;
+    }
+}
+
+/* ===== Safe area support for notched phones ===== */
+@supports (padding-bottom: env(safe-area-inset-bottom)) {
+    @media (max-width: 768px) {
+        .input-area {
+            padding-bottom: calc(12px + env(safe-area-inset-bottom));
+        }
+
+        .modal-content {
+            padding-bottom: env(safe-area-inset-bottom);
+        }
+    }
+}
+

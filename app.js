@@ -10,12 +10,19 @@ class MarketingAgentApp {
         this.scoreHistoryBtn = document.getElementById('scoreHistoryBtn');
         this.closeModalBtn = document.getElementById('closeModalBtn');
 
+        // Mobile elements
+        this.mobileTabs = document.getElementById('mobileTabs');
+        this.chatPanel = document.querySelector('.chat-panel');
+        this.pipelinePanel = document.querySelector('.pipeline-panel');
+        this.activePanel = 'chat';
+
         this.isProcessing = false;
         this.agentOutputs = {};
         this.agentTimers = {};
         this.sseBuffer = '';
 
         this.initEventListeners();
+        this.initMobileLayout();
     }
 
     initEventListeners() {
@@ -210,6 +217,8 @@ class MarketingAgentApp {
         // Start timer for this step
         if (status === 'active' && !this.agentTimers[stepId]) {
             this.agentTimers[stepId] = Date.now();
+            // Auto-switch to pipeline panel on mobile when work starts
+            this.autoSwitchToPipeline();
         }
     }
 
@@ -323,6 +332,9 @@ class MarketingAgentApp {
 
         this.isProcessing = false;
         this.sendBtn.disabled = this.userInput.value.trim() === '';
+
+        // Auto-switch back to chat on mobile to show final output
+        this.autoSwitchToChat();
     }
 
     // --- UI Update Functions ---
@@ -498,6 +510,76 @@ class MarketingAgentApp {
         });
 
         this.agentTimers = {};
+    }
+
+    // --- Mobile Layout ---
+
+    isMobile() {
+        return window.innerWidth <= 768;
+    }
+
+    initMobileLayout() {
+        // Set up mobile tab click handlers
+        if (this.mobileTabs) {
+            const tabs = this.mobileTabs.querySelectorAll('.mobile-tab');
+            tabs.forEach(tab => {
+                tab.addEventListener('click', () => {
+                    const panel = tab.dataset.panel;
+                    this.switchPanel(panel);
+                });
+            });
+        }
+
+        // Apply initial state
+        this.applyMobileState();
+
+        // Listen for resize to toggle mobile/desktop
+        window.addEventListener('resize', () => {
+            this.applyMobileState();
+        });
+    }
+
+    applyMobileState() {
+        if (this.isMobile()) {
+            this.switchPanel(this.activePanel);
+        } else {
+            // Desktop: ensure both panels are visible
+            this.chatPanel.classList.remove('mobile-hidden');
+            this.pipelinePanel.classList.remove('mobile-hidden');
+        }
+    }
+
+    switchPanel(panelName) {
+        this.activePanel = panelName;
+
+        // Update tabs
+        if (this.mobileTabs) {
+            const tabs = this.mobileTabs.querySelectorAll('.mobile-tab');
+            tabs.forEach(tab => {
+                tab.classList.toggle('active', tab.dataset.panel === panelName);
+            });
+        }
+
+        // Show/hide panels
+        if (panelName === 'chat') {
+            this.chatPanel.classList.remove('mobile-hidden');
+            this.pipelinePanel.classList.add('mobile-hidden');
+        } else {
+            this.chatPanel.classList.add('mobile-hidden');
+            this.pipelinePanel.classList.remove('mobile-hidden');
+        }
+    }
+
+    autoSwitchToPipeline() {
+        if (this.isMobile() && this.activePanel === 'chat') {
+            this.switchPanel('pipeline');
+        }
+    }
+
+    autoSwitchToChat() {
+        if (this.isMobile() && this.activePanel === 'pipeline') {
+            this.switchPanel('chat');
+        }
     }
 
     scrollToBottom() {
