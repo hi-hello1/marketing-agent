@@ -14,6 +14,7 @@ class MarketingAgentApp {
         this.mobileTabs = document.getElementById('mobileTabs');
         this.chatPanel = document.querySelector('.chat-panel');
         this.pipelinePanel = document.querySelector('.pipeline-panel');
+        this.pipelineBadge = document.getElementById('pipelineBadge');
         this.activePanel = 'chat';
 
         this.isProcessing = false;
@@ -21,8 +22,22 @@ class MarketingAgentApp {
         this.agentTimers = {};
         this.sseBuffer = '';
 
+        this.initViewportHeight();
         this.initEventListeners();
         this.initMobileLayout();
+    }
+
+    initViewportHeight() {
+        const updateHeight = () => {
+            const h = window.visualViewport ? window.visualViewport.height : window.innerHeight;
+            document.documentElement.style.setProperty('--app-height', `${h}px`);
+        };
+        updateHeight();
+        window.addEventListener('resize', updateHeight);
+        window.addEventListener('orientationchange', () => setTimeout(updateHeight, 200));
+        if (window.visualViewport) {
+            window.visualViewport.addEventListener('resize', updateHeight);
+        }
     }
 
     initEventListeners() {
@@ -38,7 +53,7 @@ class MarketingAgentApp {
             this.sendBtn.disabled = this.userInput.value.trim() === '' || this.isProcessing;
             // Auto-resize textarea
             this.userInput.style.height = 'auto';
-            this.userInput.style.height = Math.min(this.userInput.scrollHeight, 200) + 'px';
+            this.userInput.style.height = Math.min(this.userInput.scrollHeight, 160) + 'px';
         });
 
         this.scoreHistoryBtn.addEventListener('click', () => this.showScoreHistory());
@@ -61,7 +76,7 @@ class MarketingAgentApp {
                         content.style.maxHeight = '0px';
                         content.style.padding = '0 20px';
                     } else {
-                        content.style.maxHeight = content.scrollHeight + 200 + 'px';
+                        content.style.maxHeight = '500px';
                         content.style.padding = '0 20px 20px 20px';
                     }
                 }
@@ -82,6 +97,16 @@ class MarketingAgentApp {
         this.sseBuffer = '';
 
         this.resetPipeline();
+
+        // Update pipeline tab badge to active
+        if (this.pipelineBadge) {
+            this.pipelineBadge.className = 'tab-badge active';
+        }
+
+        // On mobile, switch to pipeline tab once so user sees agents starting
+        if (this.isMobile()) {
+            this.switchPanel('pipeline');
+        }
 
         try {
             const response = await fetch('/api/chat', {
@@ -117,6 +142,9 @@ class MarketingAgentApp {
             this.addAgentMessage(`<div class="error-message">⚠️ Connection error: ${this.escapeHtml(error.message)}<br>Make sure the server is running on <code>http://localhost:8000</code></div>`);
             this.isProcessing = false;
             this.sendBtn.disabled = this.userInput.value.trim() === '';
+            if (this.pipelineBadge) {
+                this.pipelineBadge.className = 'tab-badge';
+            }
         }
     }
 
@@ -217,8 +245,6 @@ class MarketingAgentApp {
         // Start timer for this step
         if (status === 'active' && !this.agentTimers[stepId]) {
             this.agentTimers[stepId] = Date.now();
-            // Auto-switch to pipeline panel on mobile when work starts
-            this.autoSwitchToPipeline();
         }
     }
 
@@ -328,13 +354,26 @@ class MarketingAgentApp {
         }
 
         finalHtml += '</div>';
+
+        // On mobile, switch to chat panel first so dimensions are resolved
+        if (this.isMobile()) {
+            this.switchPanel('chat');
+        }
+
         this.addAgentMessage(finalHtml);
 
         this.isProcessing = false;
         this.sendBtn.disabled = this.userInput.value.trim() === '';
 
-        // Auto-switch back to chat on mobile to show final output
-        this.autoSwitchToChat();
+        if (this.pipelineBadge) {
+            this.pipelineBadge.className = 'tab-badge done';
+        }
+
+        // Guarantee that the final message is scrolled into view and fully readable
+        this.forceScrollToBottom();
+        setTimeout(() => {
+            this.forceScrollToBottom();
+        }, 150);
     }
 
     // --- UI Update Functions ---
@@ -344,7 +383,7 @@ class MarketingAgentApp {
         msg.className = 'chat-message user';
         msg.innerHTML = `<div class="message-content"><p>${this.escapeHtml(text)}</p></div>`;
         this.chatHistory.appendChild(msg);
-        this.scrollToBottom();
+        this.forceScrollToBottom();
     }
 
     addAgentMessage(html) {
@@ -352,7 +391,7 @@ class MarketingAgentApp {
         msg.className = 'chat-message agent';
         msg.innerHTML = `<div class="message-content markdown-output">${html}</div>`;
         this.chatHistory.appendChild(msg);
-        this.scrollToBottom();
+        this.forceScrollToBottom();
     }
 
     updatePipelineStep(stepId, status, message) {
@@ -385,7 +424,7 @@ class MarketingAgentApp {
                 mdContainer.style.display = 'none';
             }
 
-            step.scrollIntoView({ behavior: 'smooth', block: 'center' });
+            step.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
         }
     }
 
@@ -417,9 +456,9 @@ class MarketingAgentApp {
         }
         mdContainer.style.display = 'block';
 
-        // Collapse the content to summary height
+        // Keep content scrollable and accessible
         const content = step.querySelector('.step-content');
-        content.style.maxHeight = '150px';
+        content.style.maxHeight = '340px';
     }
 
     showScore(score, reasoning, previousBest, breakdown, reworkCount) {
@@ -497,6 +536,10 @@ class MarketingAgentApp {
             this.scoreDisplay.classList.add('hidden');
         }, 600);
 
+        if (this.pipelineBadge) {
+            this.pipelineBadge.className = 'tab-badge';
+        }
+
         this.pipelineSteps.forEach(step => {
             step.className = 'pipeline-step idle';
             step.querySelector('.step-status').textContent = 'Idle';
@@ -515,7 +558,7 @@ class MarketingAgentApp {
     // --- Mobile Layout ---
 
     isMobile() {
-        return window.innerWidth <= 768;
+        return window.innerWidth <= 860;
     }
 
     initMobileLayout() {
@@ -564,6 +607,10 @@ class MarketingAgentApp {
         if (panelName === 'chat') {
             this.chatPanel.classList.remove('mobile-hidden');
             this.pipelinePanel.classList.add('mobile-hidden');
+            // Give browser frame to compute layout, then scroll to latest content
+            setTimeout(() => {
+                this.forceScrollToBottom();
+            }, 60);
         } else {
             this.chatPanel.classList.add('mobile-hidden');
             this.pipelinePanel.classList.remove('mobile-hidden');
@@ -582,11 +629,25 @@ class MarketingAgentApp {
         }
     }
 
-    scrollToBottom() {
-        // Only auto-scroll if user hasn't scrolled up
-        const isNearBottom = this.chatHistory.scrollHeight - this.chatHistory.scrollTop - this.chatHistory.clientHeight < 100;
-        if (isNearBottom) {
+    forceScrollToBottom() {
+        if (!this.chatHistory) return;
+        requestAnimationFrame(() => {
             this.chatHistory.scrollTop = this.chatHistory.scrollHeight;
+        });
+    }
+
+    scrollToBottom(force = false) {
+        if (!this.chatHistory) return;
+        if (force) {
+            this.forceScrollToBottom();
+            return;
+        }
+        // Auto-scroll if user is near bottom
+        const distFromBottom = this.chatHistory.scrollHeight - this.chatHistory.scrollTop - this.chatHistory.clientHeight;
+        if (distFromBottom < 300) {
+            requestAnimationFrame(() => {
+                this.chatHistory.scrollTop = this.chatHistory.scrollHeight;
+            });
         }
     }
 
