@@ -3,190 +3,379 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
-    <meta name="description" content="Multi-agent AI marketing system for Millibro - generates platform-specific content for X and Substack">
-    <title>Millibro Marketing Agent | AI-Powered Content Pipeline</title>
-    <!-- Google Fonts -->
+    <meta name="description" content="Millibro Marketing Agent Studio — Autonomous multi-agent AI marketing system for high-converting content and viral campaigns.">
+    <title>Millibro Marketing Agent | 3D Autonomous Studio</title>
+    <!-- Google Fonts: Poppins & Plus Jakarta Sans & Instrument Serif -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=JetBrains+Mono:wght@400;500&family=Playfair+Display:ital,wght@0,600;0,700;1,600&display=swap" rel="stylesheet">
-    <!-- marked.js for Markdown -->
+    <link href="https://fonts.googleapis.com/css2?family=Instrument+Serif:ital@0;1&family=Plus+Jakarta+Sans:wght@400;500;600;700&family=Poppins:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+    <!-- Marked.js for markdown parsing -->
     <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
     <link rel="stylesheet" href="/styles.css">
 </head>
 <body>
-    <header class="app-header">
-        <div class="logo">
-            <span class="book-icon">📖</span>
-            <h1>Millibro Marketing Agent</h1>
+    <div class="app-wrapper" id="appWrapper">
+        <!-- Atmospheric Celestial Canvas -->
+        <div class="ambient-canvas" aria-hidden="true">
+            <span class="celestial-star star-1">✦</span>
+            <span class="celestial-star star-2">✦</span>
+            <span class="celestial-star star-3">✦</span>
+            <span class="celestial-star star-4">✦</span>
+            <span class="celestial-star star-5">✦</span>
+
+            <!-- Giant 3D Background Depth Typography -->
+            <div class="giant-backdrop-text" id="backdropText">AUTONOMOUS MARKETING PIPELINE</div>
+
+            <!-- Warm Sunset Horizon Clouds -->
+            <div class="sunset-clouds-band"></div>
         </div>
-        <button id="scoreHistoryBtn" class="score-history-btn" type="button">
-            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
-            Score History
-        </button>
-    </header>
 
-    <!-- Mobile Tab Navigation -->
-    <nav class="mobile-tabs" id="mobileTabs" aria-label="Mobile Navigation">
-        <button class="mobile-tab active" data-panel="chat" id="tabChat" type="button">
-            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15a2 2 0 01-2 2H7l-4 4V5a2 2 0 012-2h14a2 2 0 012 2z"></path></svg>
-            <span>Chat</span>
-        </button>
-        <button class="mobile-tab" data-panel="pipeline" id="tabPipeline" type="button">
-            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z"></path></svg>
-            <span>Pipeline</span>
-            <span class="tab-badge" id="pipelineBadge"></span>
-        </button>
-    </nav>
-
-    <main class="app-layout">
-        <!-- Left Panel: Chat Interface -->
-        <section class="chat-panel">
-            <div id="chatHistory" class="chat-history">
-                <!-- Chat bubbles will go here -->
-                <div class="chat-message agent welcome">
-                    <div class="message-content markdown-output">
-                        <p>Welcome to Millibro Marketing Agent. Please describe the marketing campaign you want to run.</p>
-                    </div>
+        <!-- Top Navigation Bar -->
+        <header class="top-nav">
+            <div class="nav-brand-group">
+                <div class="live-status-pill">
+                    <span class="live-dot"></span>
+                    <span>Live 5-Agent Fleet</span>
+                </div>
+                <div class="brand-text-block">
+                    <span class="brand-eyebrow">Hi, Welcome to</span>
+                    <h1 class="brand-headline">Millibro Studio</h1>
                 </div>
             </div>
-            
-            <div class="input-area">
-                <textarea id="userInput" placeholder="Describe your marketing campaign... (Shift+Enter for new line)"></textarea>
-                <button id="sendBtn" class="send-btn" disabled>
-                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 2L11 13M22 2l-7 20-4-9-9-4 20-7z"></path></svg>
+
+            <div class="nav-actions">
+                <!-- 3D Hardware Mode Switch -->
+                <div class="hardware-switch-widget" id="interactiveToggle" title="Toggle 3D Perspective Dynamics">
+                    <span class="widget-label">Interactive 3D</span>
+                    <div class="switch-track">
+                        <div class="switch-thumb"></div>
+                    </div>
+                </div>
+
+                <!-- Score History Button -->
+                <button id="scoreHistoryBtn" class="score-history-btn" type="button" title="View past campaign scores">
+                    <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <circle cx="12" cy="12" r="10"></circle>
+                        <polyline points="12 6 12 12 16 14"></polyline>
+                    </svg>
+                    <span>Score History</span>
                 </button>
             </div>
-        </section>
+        </header>
 
-        <!-- Right Panel: Agent Workflow Pipeline -->
-        <section class="pipeline-panel">
-            <h2 class="panel-title">Agent Workflow</h2>
-            <div class="pipeline-container" id="workflowPipeline">
-                <!-- 1. Manager (Planning) -->
-                <div class="pipeline-step idle" data-agent="manager-plan">
-                    <div class="step-connector"></div>
-                    <div class="step-card">
-                        <div class="step-header">
-                            <span class="step-icon">🧑💼</span>
-                            <h3>Manager (Planning)</h3>
-                            <span class="step-status">Idle</span>
-                            <span class="step-time"></span>
-                        </div>
-                        <div class="step-content">
-                            <div class="streaming-text"></div>
-                            <div class="markdown-output"></div>
-                        </div>
-                    </div>
-                </div>
+        <!-- Mobile Navigation Tabs (≤980px) -->
+        <nav class="mobile-tabs" id="mobileTabs" aria-label="Mobile Navigation">
+            <button class="mobile-tab active" data-panel="chat" id="tabChat" type="button">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <path d="M21 15a2 2 0 01-2 2H7l-4 4V5a2 2 0 012-2h14a2 2 0 012 2z"></path>
+                </svg>
+                <span>Marketing Studio</span>
+            </button>
+            <button class="mobile-tab" data-panel="pipeline" id="tabPipeline" type="button">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z"></path>
+                </svg>
+                <span>Agent Pipeline</span>
+                <span class="tab-badge" id="pipelineBadge"></span>
+            </button>
+        </nav>
 
-                <!-- 2. Researcher -->
-                <div class="pipeline-step idle" data-agent="researcher">
-                    <div class="step-connector"></div>
-                    <div class="step-card">
-                        <div class="step-header">
-                            <span class="step-icon">🔍</span>
-                            <h3>Researcher</h3>
-                            <span class="step-status">Idle</span>
-                            <span class="step-time"></span>
-                        </div>
-                        <div class="step-content">
-                            <div class="streaming-text"></div>
-                            <div class="markdown-output"></div>
-                        </div>
-                    </div>
-                </div>
+        <!-- Main 3D Workspace Stage -->
+        <main class="workspace-container">
+            <!-- 3D Tilting Rig -->
+            <div class="tilt-rig" id="tiltRig">
+                <!-- Volumetric Cyan Beam -->
+                <div class="volumetric-cyan-beam"></div>
 
-                <!-- 3. Copywriter -->
-                <div class="pipeline-step idle" data-agent="copywriter">
-                    <div class="step-connector"></div>
-                    <div class="step-card">
-                        <div class="step-header">
-                            <span class="step-icon">✍️</span>
-                            <h3>Copywriter</h3>
-                            <span class="step-status">Idle</span>
-                            <span class="step-time"></span>
-                        </div>
-                        <div class="step-content">
-                            <div class="streaming-text"></div>
-                            <div class="markdown-output"></div>
-                        </div>
-                    </div>
-                </div>
+                <!-- Floating Hologram Screen -->
+                <div class="hologram-glass-card">
+                    <!-- Purple Corner Clips -->
+                    <div class="corner-bracket bracket-tl"></div>
+                    <div class="corner-bracket bracket-tr"></div>
+                    <div class="corner-bracket bracket-bl"></div>
+                    <div class="corner-bracket bracket-br"></div>
 
-                <!-- 4. Planner -->
-                <div class="pipeline-step idle" data-agent="planner">
-                    <div class="step-connector"></div>
-                    <div class="step-card">
-                        <div class="step-header">
-                            <span class="step-icon">📋</span>
-                            <h3>Planner</h3>
-                            <span class="step-status">Idle</span>
-                            <span class="step-time"></span>
+                    <!-- Left: Autonomous Agent Pipeline Panel -->
+                    <section class="agent-dock-column pipeline-panel">
+                        <div class="dock-header-row">
+                            <span>Agent Fleet</span>
+                            <span class="fleet-active-badge">5 Active</span>
                         </div>
-                        <div class="step-content">
-                            <div class="streaming-text"></div>
-                            <div class="markdown-output"></div>
-                        </div>
-                    </div>
-                </div>
 
-                <!-- 5. Manager (Review & Score) -->
-                <div class="pipeline-step idle" data-agent="manager-review">
-                    <div class="step-connector"></div>
-                    <div class="step-card">
-                        <div class="step-header">
-                            <span class="step-icon">🧑💼</span>
-                            <h3>Manager (Review)</h3>
-                            <span class="step-status">Idle</span>
-                            <span class="step-time"></span>
+                        <div class="pipeline-steps-wrapper" id="workflowPipeline">
+                            <!-- Step 1: Manager (Planning) -->
+                            <div class="pipeline-step idle" data-agent="manager-plan">
+                                <div class="step-card">
+                                    <div class="step-header">
+                                        <div class="step-badge-icon" style="background:#f3e8ff;">🧑‍💼</div>
+                                        <div class="step-meta">
+                                            <div class="step-title">Manager</div>
+                                            <div class="step-role">Strategy & Delegation</div>
+                                        </div>
+                                        <div class="step-timing-block">
+                                            <span class="step-status">Idle</span>
+                                            <span class="step-time"></span>
+                                        </div>
+                                    </div>
+                                    <div class="step-content">
+                                        <div class="streaming-text"></div>
+                                        <div class="markdown-output"></div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Step 2: Researcher -->
+                            <div class="pipeline-step idle" data-agent="researcher">
+                                <div class="step-card">
+                                    <div class="step-header">
+                                        <div class="step-badge-icon" style="background:#e0f2fe;">🔍</div>
+                                        <div class="step-meta">
+                                            <div class="step-title">Researcher</div>
+                                            <div class="step-role">Audience & Angle Insights</div>
+                                        </div>
+                                        <div class="step-timing-block">
+                                            <span class="step-status">Idle</span>
+                                            <span class="step-time"></span>
+                                        </div>
+                                    </div>
+                                    <div class="step-content">
+                                        <div class="streaming-text"></div>
+                                        <div class="markdown-output"></div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Step 3: Copywriter -->
+                            <div class="pipeline-step idle" data-agent="copywriter">
+                                <div class="step-card">
+                                    <div class="step-header">
+                                        <div class="step-badge-icon" style="background:#ecfdf5;">✍️</div>
+                                        <div class="step-meta">
+                                            <div class="step-title">Copywriter</div>
+                                            <div class="step-role">Multi-Platform Persuasive Copy</div>
+                                        </div>
+                                        <div class="step-timing-block">
+                                            <span class="step-status">Idle</span>
+                                            <span class="step-time"></span>
+                                        </div>
+                                    </div>
+                                    <div class="step-content">
+                                        <div class="streaming-text"></div>
+                                        <div class="markdown-output"></div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Step 4: Planner -->
+                            <div class="pipeline-step idle" data-agent="planner">
+                                <div class="step-card">
+                                    <div class="step-header">
+                                        <div class="step-badge-icon" style="background:#fef3c7;">📋</div>
+                                        <div class="step-meta">
+                                            <div class="step-title">Planner</div>
+                                            <div class="step-role">Publishing Schedule</div>
+                                        </div>
+                                        <div class="step-timing-block">
+                                            <span class="step-status">Idle</span>
+                                            <span class="step-time"></span>
+                                        </div>
+                                    </div>
+                                    <div class="step-content">
+                                        <div class="streaming-text"></div>
+                                        <div class="markdown-output"></div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Step 5: Manager (Review) -->
+                            <div class="pipeline-step idle" data-agent="manager-review">
+                                <div class="step-card">
+                                    <div class="step-header">
+                                        <div class="step-badge-icon" style="background:#fce7f3;">🎯</div>
+                                        <div class="step-meta">
+                                            <div class="step-title">Reviewer</div>
+                                            <div class="step-role">Quality & Conversion Scoring</div>
+                                        </div>
+                                        <div class="step-timing-block">
+                                            <span class="step-status">Idle</span>
+                                            <span class="step-time"></span>
+                                        </div>
+                                    </div>
+                                    <div class="step-content">
+                                        <div class="streaming-text"></div>
+                                        <div class="markdown-output"></div>
+                                    </div>
+                                </div>
+                            </div>
                         </div>
-                        <div class="step-content">
-                            <div class="streaming-text"></div>
-                            <div class="markdown-output"></div>
+                    </section>
+
+                    <!-- Center: Marketing Studio & Live Campaign Console -->
+                    <section class="studio-center-column chat-panel">
+                        <div class="studio-header">
+                            <h2 class="greeting-title">Hello There, Marketer 👋</h2>
+                            <span class="pipeline-status-tag">Live Autonomous Studio</span>
                         </div>
-                    </div>
+
+                        <!-- Chat & Campaign Stream History -->
+                        <div class="chat-history" id="chatHistory">
+                            <!-- Welcome Holographic Card -->
+                            <div class="chat-message agent welcome">
+                                <div class="welcome-holo-banner">
+                                    <div class="banner-tags-row">
+                                        <span class="banner-chip">AUTONOMOUS WORKFLOW</span>
+                                        <span style="font-size:0.78rem; color:#10b981; font-weight:600;">● Engine Ready</span>
+                                    </div>
+                                    <p class="banner-desc">
+                                        Welcome to Millibro Marketing Studio. Describe your product, launch goal, or target audience below. Your autonomous fleet will orchestrate competitive research, craft persuasive multi-channel copy, and verify quality with real-time conversion scoring.
+                                    </p>
+                                    <div class="checklist-preview-grid">
+                                        <div class="check-card"><span>🔍</span> Deep Audience & Trend Discovery</div>
+                                        <div class="check-card"><span>✍️</span> High-Converting Hook & Story Thread</div>
+                                        <div class="check-card"><span>📋</span> Optimal Multi-Channel Schedule</div>
+                                        <div class="check-card"><span>🎯</span> 4-Metric Conversion Quality Score</div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Floating Input Dock -->
+                        <div class="floating-input-dock">
+                            <textarea id="userInput" placeholder="Describe your product launch, audience, or campaign goal... (Shift+Enter for new line)" rows="1"></textarea>
+                            <button id="sendBtn" class="send-action-btn" type="button" disabled aria-label="Send Campaign Prompt">➔</button>
+                        </div>
+
+                        <!-- Starter Idea Chips -->
+                        <div class="starter-chips-carousel">
+                            <button class="starter-chip" type="button" data-prompt="Launch a high-converting X thread announcing our new AI productivity tool for indie founders.">
+                                🚀 X Thread
+                            </button>
+                            <button class="starter-chip" type="button" data-prompt="Write an insightful Substack newsletter dissecting how modern B2B SaaS companies acquire their first 1,000 customers.">
+                                📰 Substack Newsletter
+                            </button>
+                            <button class="starter-chip" type="button" data-prompt="Create a viral organic marketing plan for a boutique organic matcha brand.">
+                                🍵 Brand Campaign
+                            </button>
+                            <button class="starter-chip" type="button" data-prompt="Craft a 3-part teaser campaign for our upcoming product hunt launch next Tuesday.">
+                                🎯 Product Hunt Teaser
+                            </button>
+                        </div>
+                    </section>
+
+                    <!-- Right: Performance HUD & Live Gauge -->
+                    <aside class="hud-metrics-column">
+                        <div class="hud-header-title">Campaign Evaluation</div>
+                        
+                        <div id="scoreDisplay" class="score-display hidden">
+                            <div class="score-circle-wrapper">
+                                <svg class="score-circle-svg" viewBox="0 0 100 100">
+                                    <defs>
+                                        <linearGradient id="scoreGaugeGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+                                            <stop offset="0%" stop-color="#8b5cf6"/>
+                                            <stop offset="50%" stop-color="#06b6d4"/>
+                                            <stop offset="100%" stop-color="#10b981"/>
+                                        </linearGradient>
+                                    </defs>
+                                    <circle class="gauge-bg" cx="50" cy="50" r="45"></circle>
+                                    <circle class="gauge-progress" cx="50" cy="50" r="45"></circle>
+                                </svg>
+                                <div class="score-value">0</div>
+                            </div>
+
+                            <div class="score-reasoning markdown-output"></div>
+                        </div>
+
+                        <!-- Default Live HUD Metric Preview -->
+                        <div class="hud-metrics-fallback" id="hudDefaultMetrics">
+                            <div class="preview-gauge-wrap">
+                                <svg class="score-circle-svg" viewBox="0 0 100 100">
+                                    <circle class="gauge-bg" cx="50" cy="50" r="45"></circle>
+                                    <circle class="preview-gauge-stroke" cx="50" cy="50" r="45"></circle>
+                                </svg>
+                                <div class="preview-gauge-text">
+                                    <span>88</span>
+                                    <span class="preview-badge">Benchmark</span>
+                                </div>
+                            </div>
+                            <div class="breakdown-card-list">
+                                <div class="breakdown-row">
+                                    <span>Content Quality</span>
+                                    <span class="score-num">23/25</span>
+                                </div>
+                                <div class="breakdown-row">
+                                    <span>Brand Alignment</span>
+                                    <span class="score-num">22/25</span>
+                                </div>
+                                <div class="breakdown-row">
+                                    <span>Platform Fit</span>
+                                    <span class="score-num">21/25</span>
+                                </div>
+                                <div class="breakdown-row">
+                                    <span>Conversion Power</span>
+                                    <span class="score-num">22/25</span>
+                                </div>
+                            </div>
+                        </div>
+                    </aside>
                 </div>
             </div>
 
-            <!-- Score Display -->
-            <div id="scoreDisplay" class="score-display hidden">
-                <div class="score-gauge-container">
-                    <svg class="score-gauge" viewBox="0 0 100 100">
-                        <circle class="gauge-bg" cx="50" cy="50" r="45"></circle>
-                        <circle class="gauge-progress" cx="50" cy="50" r="45"></circle>
-                    </svg>
-                    <div class="score-value">0</div>
+            <!-- Foreground 3D Hardware Pedestal & Characters -->
+            <div class="hardware-console-pedestal">
+                <!-- Cute Clay Mascot Mug ("Milli") with Googly Eyes -->
+                <div class="mascot-clay-mug" id="mascotMug" title="Milli — Your Marketing Companion">
+                    <div class="mascot-handle"></div>
+                    <div class="mascot-face">
+                        <div class="mascot-eyes">
+                            <div class="mascot-eye"></div>
+                            <div class="mascot-eye"></div>
+                        </div>
+                        <div class="mascot-mouth"></div>
+                    </div>
                 </div>
-                <div class="score-reasoning markdown-output"></div>
+
+                <!-- 3D Futuristic Console Base -->
+                <div class="console-deck-body">
+                    <div class="cyan-led-strip"></div>
+                    <div class="peach-rotary-dial" id="peachDial" title="Click to Tune Focus Intensity"></div>
+                </div>
+
+                <!-- Glossy Mint Sphere -->
+                <div class="mint-gloss-sphere" title="Aesthetic Orbiting Sphere"></div>
             </div>
-        </section>
-    </main>
+        </main>
+    </div>
 
     <!-- Score History Modal -->
     <div id="scoreModal" class="modal hidden">
-        <div class="modal-content glass-panel">
+        <div class="modal-backdrop"></div>
+        <div class="modal-content">
             <div class="modal-header">
-                <h2>Score History</h2>
-                <button id="closeModalBtn" class="icon-btn">✕</button>
+                <div>
+                    <h2>Campaign Performance History</h2>
+                    <p class="modal-subtitle">Benchmark past iterations and rework cycles</p>
+                </div>
+                <button id="closeModalBtn" class="icon-btn" type="button" aria-label="Close Modal">✕</button>
             </div>
             <div class="modal-body">
                 <table class="history-table">
                     <thead>
                         <tr>
                             <th>Date</th>
-                            <th>Request</th>
+                            <th>Campaign Request</th>
                             <th>Score</th>
                             <th>Reworks</th>
                         </tr>
                     </thead>
                     <tbody id="historyTableBody">
-                        <!-- History rows -->
+                        <!-- Populated dynamically via app.js -->
                     </tbody>
                 </table>
             </div>
         </div>
     </div>
 
+    <!-- Application Script -->
     <script src="/app.js"></script>
 </body>
 </html>

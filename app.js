@@ -82,6 +82,71 @@ class MarketingAgentApp {
                 }
             });
         });
+
+        // Interactive 3D Perspective Tilt Physics (Planet Jumping Inspired)
+        const tiltRig = document.getElementById('tiltRig');
+        const backdropText = document.getElementById('backdropText');
+        this.is3DActive = true;
+
+        window.addEventListener('mousemove', (e) => {
+            if (!this.is3DActive || window.innerWidth < 980 || !tiltRig) return;
+            const x = (e.clientX / window.innerWidth) - 0.5;
+            const y = (e.clientY / window.innerHeight) - 0.5;
+
+            const rx = -y * 14;
+            const ry = x * 18;
+
+            tiltRig.style.transform = `rotateX(${rx}deg) rotateY(${ry}deg)`;
+            if (backdropText) {
+                backdropText.style.transform = `translate(calc(-50% + ${-x * 35}px), calc(-50% + ${-y * 20}px))`;
+            }
+        });
+
+        window.addEventListener('mouseleave', () => {
+            if (tiltRig) {
+                tiltRig.style.transform = 'rotateX(0deg) rotateY(0deg)';
+            }
+        });
+
+        // Interactive mode toggle
+        const interactiveToggle = document.getElementById('interactiveToggle');
+        if (interactiveToggle) {
+            interactiveToggle.addEventListener('click', () => {
+                this.is3DActive = !this.is3DActive;
+                document.body.classList.toggle('mode-3d-off', !this.is3DActive);
+                if (!this.is3DActive && tiltRig) {
+                    tiltRig.style.transform = 'rotateX(0deg) rotateY(0deg)';
+                    if (backdropText) backdropText.style.transform = 'translate(-50%, -50%)';
+                }
+            });
+        }
+
+        // Peach Rotary Dial Interaction
+        const peachDial = document.getElementById('peachDial');
+        let dialRot = 0;
+        if (peachDial) {
+            peachDial.addEventListener('click', () => {
+                dialRot += 45;
+                peachDial.style.transform = `rotate(${dialRot}deg) scale(1.1)`;
+                setTimeout(() => {
+                    peachDial.style.transform = `rotate(${dialRot}deg) scale(1)`;
+                }, 200);
+            });
+        }
+
+        // Quick Idea Starter Chips
+        document.querySelectorAll('.starter-chip').forEach(chip => {
+            chip.addEventListener('click', () => {
+                const prompt = chip.getAttribute('data-prompt');
+                if (prompt) {
+                    this.userInput.value = prompt;
+                    this.userInput.style.height = 'auto';
+                    this.userInput.style.height = Math.min(this.userInput.scrollHeight, 160) + 'px';
+                    this.sendBtn.disabled = false;
+                    this.userInput.focus();
+                }
+            });
+        });
     }
 
     async handleSend() {
@@ -462,6 +527,9 @@ class MarketingAgentApp {
     }
 
     showScore(score, reasoning, previousBest, breakdown, reworkCount) {
+        const defaultMetrics = document.getElementById('hudDefaultMetrics');
+        if (defaultMetrics) defaultMetrics.style.display = 'none';
+
         this.scoreDisplay.classList.remove('hidden');
         setTimeout(() => {
             this.scoreDisplay.classList.add('visible');
@@ -531,6 +599,9 @@ class MarketingAgentApp {
     }
 
     resetPipeline() {
+        const defaultMetrics = document.getElementById('hudDefaultMetrics');
+        if (defaultMetrics) defaultMetrics.style.display = 'block';
+
         this.scoreDisplay.classList.remove('visible');
         setTimeout(() => {
             this.scoreDisplay.classList.add('hidden');
@@ -634,6 +705,16 @@ class MarketingAgentApp {
         requestAnimationFrame(() => {
             this.chatHistory.scrollTop = this.chatHistory.scrollHeight;
         });
+        setTimeout(() => {
+            if (this.chatHistory) {
+                this.chatHistory.scrollTop = this.chatHistory.scrollHeight;
+            }
+        }, 80);
+        setTimeout(() => {
+            if (this.chatHistory) {
+                this.chatHistory.scrollTop = this.chatHistory.scrollHeight;
+            }
+        }, 250);
     }
 
     scrollToBottom(force = false) {
