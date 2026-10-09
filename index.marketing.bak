@@ -1,0 +1,192 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+    <meta name="description" content="Multi-agent AI marketing system for Millibro - generates platform-specific content for X and Substack">
+    <title>Millibro Marketing Agent | AI-Powered Content Pipeline</title>
+    <!-- Google Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=JetBrains+Mono:wght@400;500&family=Playfair+Display:ital,wght@0,600;0,700;1,600&display=swap" rel="stylesheet">
+    <!-- marked.js for Markdown -->
+    <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
+    <link rel="stylesheet" href="/styles.css">
+</head>
+<body>
+    <header class="app-header">
+        <div class="logo">
+            <span class="book-icon">📖</span>
+            <h1>Millibro Marketing Agent</h1>
+        </div>
+        <button id="scoreHistoryBtn" class="score-history-btn" type="button">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
+            Score History
+        </button>
+    </header>
+
+    <!-- Mobile Tab Navigation -->
+    <nav class="mobile-tabs" id="mobileTabs" aria-label="Mobile Navigation">
+        <button class="mobile-tab active" data-panel="chat" id="tabChat" type="button">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15a2 2 0 01-2 2H7l-4 4V5a2 2 0 012-2h14a2 2 0 012 2z"></path></svg>
+            <span>Chat</span>
+        </button>
+        <button class="mobile-tab" data-panel="pipeline" id="tabPipeline" type="button">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z"></path></svg>
+            <span>Pipeline</span>
+            <span class="tab-badge" id="pipelineBadge"></span>
+        </button>
+    </nav>
+
+    <main class="app-layout">
+        <!-- Left Panel: Chat Interface -->
+        <section class="chat-panel">
+            <div id="chatHistory" class="chat-history">
+                <!-- Chat bubbles will go here -->
+                <div class="chat-message agent welcome">
+                    <div class="message-content markdown-output">
+                        <p>Welcome to Millibro Marketing Agent. Please describe the marketing campaign you want to run.</p>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="input-area">
+                <textarea id="userInput" placeholder="Describe your marketing campaign... (Shift+Enter for new line)"></textarea>
+                <button id="sendBtn" class="send-btn" disabled>
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 2L11 13M22 2l-7 20-4-9-9-4 20-7z"></path></svg>
+                </button>
+            </div>
+        </section>
+
+        <!-- Right Panel: Agent Workflow Pipeline -->
+        <section class="pipeline-panel">
+            <h2 class="panel-title">Agent Workflow</h2>
+            <div class="pipeline-container" id="workflowPipeline">
+                <!-- 1. Manager (Planning) -->
+                <div class="pipeline-step idle" data-agent="manager-plan">
+                    <div class="step-connector"></div>
+                    <div class="step-card">
+                        <div class="step-header">
+                            <span class="step-icon">🧑💼</span>
+                            <h3>Manager (Planning)</h3>
+                            <span class="step-status">Idle</span>
+                            <span class="step-time"></span>
+                        </div>
+                        <div class="step-content">
+                            <div class="streaming-text"></div>
+                            <div class="markdown-output"></div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- 2. Researcher -->
+                <div class="pipeline-step idle" data-agent="researcher">
+                    <div class="step-connector"></div>
+                    <div class="step-card">
+                        <div class="step-header">
+                            <span class="step-icon">🔍</span>
+                            <h3>Researcher</h3>
+                            <span class="step-status">Idle</span>
+                            <span class="step-time"></span>
+                        </div>
+                        <div class="step-content">
+                            <div class="streaming-text"></div>
+                            <div class="markdown-output"></div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- 3. Copywriter -->
+                <div class="pipeline-step idle" data-agent="copywriter">
+                    <div class="step-connector"></div>
+                    <div class="step-card">
+                        <div class="step-header">
+                            <span class="step-icon">✍️</span>
+                            <h3>Copywriter</h3>
+                            <span class="step-status">Idle</span>
+                            <span class="step-time"></span>
+                        </div>
+                        <div class="step-content">
+                            <div class="streaming-text"></div>
+                            <div class="markdown-output"></div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- 4. Planner -->
+                <div class="pipeline-step idle" data-agent="planner">
+                    <div class="step-connector"></div>
+                    <div class="step-card">
+                        <div class="step-header">
+                            <span class="step-icon">📋</span>
+                            <h3>Planner</h3>
+                            <span class="step-status">Idle</span>
+                            <span class="step-time"></span>
+                        </div>
+                        <div class="step-content">
+                            <div class="streaming-text"></div>
+                            <div class="markdown-output"></div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- 5. Manager (Review & Score) -->
+                <div class="pipeline-step idle" data-agent="manager-review">
+                    <div class="step-connector"></div>
+                    <div class="step-card">
+                        <div class="step-header">
+                            <span class="step-icon">🧑💼</span>
+                            <h3>Manager (Review)</h3>
+                            <span class="step-status">Idle</span>
+                            <span class="step-time"></span>
+                        </div>
+                        <div class="step-content">
+                            <div class="streaming-text"></div>
+                            <div class="markdown-output"></div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Score Display -->
+            <div id="scoreDisplay" class="score-display hidden">
+                <div class="score-gauge-container">
+                    <svg class="score-gauge" viewBox="0 0 100 100">
+                        <circle class="gauge-bg" cx="50" cy="50" r="45"></circle>
+                        <circle class="gauge-progress" cx="50" cy="50" r="45"></circle>
+                    </svg>
+                    <div class="score-value">0</div>
+                </div>
+                <div class="score-reasoning markdown-output"></div>
+            </div>
+        </section>
+    </main>
+
+    <!-- Score History Modal -->
+    <div id="scoreModal" class="modal hidden">
+        <div class="modal-content glass-panel">
+            <div class="modal-header">
+                <h2>Score History</h2>
+                <button id="closeModalBtn" class="icon-btn">✕</button>
+            </div>
+            <div class="modal-body">
+                <table class="history-table">
+                    <thead>
+                        <tr>
+                            <th>Date</th>
+                            <th>Request</th>
+                            <th>Score</th>
+                            <th>Reworks</th>
+                        </tr>
+                    </thead>
+                    <tbody id="historyTableBody">
+                        <!-- History rows -->
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <script src="/app.js"></script>
+</body>
+</html>
