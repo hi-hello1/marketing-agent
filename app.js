@@ -41,6 +41,26 @@ class MarketingAgentApp {
     }
 
     initEventListeners() {
+        // Touch, scroll, and wheel interaction tracking to prevent fighting user swipes
+        this.isUserInteracting = false;
+        let interactionTimer = null;
+        const markUserInteracting = () => {
+            this.isUserInteracting = true;
+            if (interactionTimer) clearTimeout(interactionTimer);
+            interactionTimer = setTimeout(() => {
+                this.isUserInteracting = false;
+            }, 1200);
+        };
+
+        if (this.chatHistory) {
+            this.chatHistory.addEventListener('touchstart', markUserInteracting, { passive: true });
+            this.chatHistory.addEventListener('touchmove', markUserInteracting, { passive: true });
+            this.chatHistory.addEventListener('touchend', markUserInteracting, { passive: true });
+            this.chatHistory.addEventListener('touchcancel', markUserInteracting, { passive: true });
+            this.chatHistory.addEventListener('wheel', markUserInteracting, { passive: true });
+            this.chatHistory.addEventListener('scroll', markUserInteracting, { passive: true });
+        }
+
         this.sendBtn.addEventListener('click', () => this.handleSend());
         this.userInput.addEventListener('keydown', (e) => {
             if (e.key === 'Enter' && !e.shiftKey) {
@@ -168,8 +188,10 @@ class MarketingAgentApp {
             this.pipelineBadge.className = 'tab-badge active';
         }
 
-        // On mobile, switch to pipeline tab once so user sees agents starting
+        // On mobile, switch to pipeline tab once so user sees agents starting and hide starter chips
         if (this.isMobile()) {
+            const chips = document.querySelector('.starter-chips-carousel');
+            if (chips) chips.style.display = 'none';
             this.switchPanel('pipeline');
         }
 
@@ -425,7 +447,7 @@ class MarketingAgentApp {
             this.switchPanel('chat');
         }
 
-        this.addAgentMessage(finalHtml);
+        const msgEl = this.addAgentMessage(finalHtml);
 
         this.isProcessing = false;
         this.sendBtn.disabled = this.userInput.value.trim() === '';
@@ -434,11 +456,16 @@ class MarketingAgentApp {
             this.pipelineBadge.className = 'tab-badge done';
         }
 
-        // Guarantee that the final message is scrolled into view and fully readable
-        this.forceScrollToBottom();
-        setTimeout(() => {
+        if (this.isMobile()) {
+            // On mobile, smoothly scroll so user reads the campaign output from the beginning
+            setTimeout(() => {
+                if (msgEl && !this.isUserInteracting && this.chatHistory) {
+                    this.chatHistory.scrollTop = msgEl.offsetTop - 10;
+                }
+            }, 80);
+        } else {
             this.forceScrollToBottom();
-        }, 150);
+        }
     }
 
     // --- UI Update Functions ---
@@ -449,6 +476,7 @@ class MarketingAgentApp {
         msg.innerHTML = `<div class="message-content"><p>${this.escapeHtml(text)}</p></div>`;
         this.chatHistory.appendChild(msg);
         this.forceScrollToBottom();
+        return msg;
     }
 
     addAgentMessage(html) {
@@ -456,7 +484,10 @@ class MarketingAgentApp {
         msg.className = 'chat-message agent';
         msg.innerHTML = `<div class="message-content markdown-output">${html}</div>`;
         this.chatHistory.appendChild(msg);
-        this.forceScrollToBottom();
+        if (!this.isMobile()) {
+            this.forceScrollToBottom();
+        }
+        return msg;
     }
 
     updatePipelineStep(stepId, status, message) {
@@ -629,7 +660,7 @@ class MarketingAgentApp {
     // --- Mobile Layout ---
 
     isMobile() {
-        return window.innerWidth <= 860;
+        return window.innerWidth <= 980;
     }
 
     initMobileLayout() {
@@ -678,9 +709,11 @@ class MarketingAgentApp {
         if (panelName === 'chat') {
             this.chatPanel.classList.remove('mobile-hidden');
             this.pipelinePanel.classList.add('mobile-hidden');
-            // Give browser frame to compute layout, then scroll to latest content
+            // Give browser frame to compute layout
             setTimeout(() => {
-                this.forceScrollToBottom();
+                if (!this.isUserInteracting) {
+                    this.scrollToBottom();
+                }
             }, 60);
         } else {
             this.chatPanel.classList.add('mobile-hidden');
@@ -701,20 +734,17 @@ class MarketingAgentApp {
     }
 
     forceScrollToBottom() {
-        if (!this.chatHistory) return;
+        if (!this.chatHistory || this.isUserInteracting) return;
         requestAnimationFrame(() => {
-            this.chatHistory.scrollTop = this.chatHistory.scrollHeight;
+            if (this.chatHistory && !this.isUserInteracting) {
+                this.chatHistory.scrollTop = this.chatHistory.scrollHeight;
+            }
         });
         setTimeout(() => {
-            if (this.chatHistory) {
+            if (this.chatHistory && !this.isUserInteracting) {
                 this.chatHistory.scrollTop = this.chatHistory.scrollHeight;
             }
-        }, 80);
-        setTimeout(() => {
-            if (this.chatHistory) {
-                this.chatHistory.scrollTop = this.chatHistory.scrollHeight;
-            }
-        }, 250);
+        }, 120);
     }
 
     scrollToBottom(force = false) {

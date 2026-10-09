@@ -71,16 +71,17 @@
 
 html {
     width: 100%;
-    min-height: 100%;
+    height: 100%;
+    height: 100dvh;
     background: linear-gradient(180deg, #1d4ed8 0%, #6366f1 30%, #c084fc 60%, #f472b6 84%, #fed7aa 100%);
+    overflow: hidden;
 }
 
 body {
     width: 100%;
-    min-height: 100vh;
-    min-height: 100dvh;
-    overflow-x: hidden;
-    overflow-y: auto;
+    height: 100%;
+    height: 100dvh;
+    overflow: hidden;
     font-family: var(--font-body);
     color: var(--ink);
     background: transparent;
@@ -92,11 +93,12 @@ body {
 .app-wrapper {
     position: relative;
     width: 100%;
-    min-height: 100vh;
-    min-height: 100dvh;
+    height: 100%;
+    height: 100dvh;
     display: flex;
     flex-direction: column;
     perspective: 1400px;
+    overflow: hidden;
 }
 
 /* =====================================================================
@@ -328,7 +330,7 @@ body {
 .workspace-container {
     position: relative;
     z-index: 20;
-    flex: 1 1 auto;
+    flex: 1 1 0%;
     min-height: 0;
     width: 100%;
     max-width: 1380px;
@@ -337,7 +339,8 @@ body {
     flex-direction: column;
     align-items: center;
     justify-content: center;
-    padding: 10px 32px 36px;
+    padding: 8px 32px 20px;
+    overflow: hidden;
 }
 
 /* 3D Tilting Rig (Perspective Target) */
@@ -345,6 +348,10 @@ body {
     position: relative;
     width: 100%;
     max-width: 1200px;
+    flex: 1 1 0%;
+    min-height: 0;
+    display: flex;
+    flex-direction: column;
     transform-style: preserve-3d;
     transition: transform 0.15s ease-out;
     will-change: transform;
@@ -376,6 +383,8 @@ body {
     position: relative;
     z-index: 10;
     width: 100%;
+    flex: 1 1 0%;
+    min-height: 0;
     background: var(--card-glass);
     backdrop-filter: blur(32px) saturate(1.4);
     -webkit-backdrop-filter: blur(32px) saturate(1.4);
@@ -386,7 +395,6 @@ body {
                 inset 0 -1px 0 rgba(192, 132, 252, 0.3);
     display: grid;
     grid-template-columns: 300px 1fr 310px;
-    min-height: 520px;
     overflow: hidden;
     transform: translateZ(40px);
 }
@@ -1324,30 +1332,64 @@ body {
     }
 
     /* Responsive 3D Canvas Collapse */
+    .app-wrapper {
+        perspective: none !important;
+    }
+
     .giant-backdrop-text {
-        font-size: 48px;
+        font-size: 44px;
         top: 20%;
     }
 
     .workspace-container {
-        padding: 10px 14px 24px;
+        flex: 1 1 0%;
+        min-height: 0;
+        height: 100%;
+        width: 100%;
+        padding: 8px 10px 12px;
+        overflow: hidden;
+        display: flex;
+        flex-direction: column;
+    }
+
+    .tilt-rig {
+        flex: 1 1 0%;
+        min-height: 0;
+        height: 100%;
+        width: 100%;
+        max-width: 100%;
+        transform: none !important;
+        transform-style: flat !important;
+        will-change: auto !important;
+        display: flex;
+        flex-direction: column;
+    }
+
+    .corner-bracket {
+        display: none !important;
     }
 
     .hologram-glass-card {
+        flex: 1 1 0%;
+        min-height: 0;
+        height: 100%;
+        width: 100%;
         grid-template-columns: 1fr;
-        min-height: auto;
+        display: flex;
+        flex-direction: column;
+        border-radius: 20px;
+        overflow: hidden;
+        transform: none !important;
+        background: #ffffff !important;
+        backdrop-filter: none !important;
+        -webkit-backdrop-filter: none !important;
+        box-shadow: 0 10px 30px rgba(30, 27, 75, 0.15);
     }
 
-    .hud-metrics-column {
-        display: none;
-    }
-
-    .hardware-console-pedestal {
-        display: none;
-    }
-
+    .hud-metrics-column,
+    .hardware-console-pedestal,
     .volumetric-cyan-beam {
-        display: none;
+        display: none !important;
     }
 
     .chat-panel.mobile-hidden,
@@ -1356,16 +1398,98 @@ body {
     }
 
     .studio-center-column {
-        padding: 16px;
+        flex: 1 1 0%;
+        min-height: 0;
+        height: 100%;
+        width: 100%;
+        padding: 10px 10px 8px;
+        display: flex;
+        flex-direction: column;
+        overflow: hidden;
     }
 
-    .agent-dock-column {
-        padding: 16px;
+    .studio-header {
+        margin-bottom: 6px;
+        padding-bottom: 4px;
+        flex-shrink: 0;
+    }
+
+    .greeting-title {
+        font-size: 1rem;
     }
 
     .chat-history {
-        padding-right: 0;
-        gap: 14px;
+        flex: 1 1 0%;
+        min-height: 0;
+        width: 100%;
+        padding: 6px 2px 24px 2px;
+        overflow-y: scroll;
+        overflow-x: hidden;
+        -webkit-overflow-scrolling: touch;
+        overscroll-behavior-y: contain;
+        touch-action: pan-y;
+        display: flex;
+        flex-direction: column;
+        gap: 12px;
+    }
+
+    .chat-history * {
+        touch-action: pan-y;
+    }
+
+    .chat-history pre,
+    .chat-history table,
+    .starter-chips-carousel {
+        touch-action: pan-y pan-x !important;
+    }
+
+    .chat-message {
+        flex-shrink: 0 !important;
+        animation: none !important;
+        transform: none !important;
+    }
+
+    .floating-input-dock {
+        margin-top: 6px;
+        padding: 6px 10px 6px 14px;
+        border-radius: 14px;
+        flex-shrink: 0;
+    }
+
+    .starter-chips-carousel {
+        margin-top: 4px;
+        flex-shrink: 0;
+        padding-bottom: 2px;
+        scrollbar-width: none !important;
+        -ms-overflow-style: none !important;
+    }
+
+    .starter-chips-carousel::-webkit-scrollbar {
+        display: none !important;
+        height: 0 !important;
+        width: 0 !important;
+    }
+
+    .chat-history::-webkit-scrollbar {
+        width: 4px;
+    }
+    .chat-history::-webkit-scrollbar-thumb {
+        background: rgba(139, 92, 246, 0.4);
+        border-radius: 4px;
+    }
+
+    .agent-dock-column {
+        flex: 1 1 0%;
+        min-height: 0;
+        height: 100%;
+        width: 100%;
+        padding: 12px 10px;
+        overflow-y: scroll;
+        overflow-x: hidden;
+        -webkit-overflow-scrolling: touch;
+        overscroll-behavior-y: contain;
+        touch-action: pan-y;
+        border-right: none;
     }
 }
 
