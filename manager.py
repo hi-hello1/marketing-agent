@@ -19,12 +19,12 @@ try:
     from .researcher import ResearcherAgent
     from .copywriter import CopywriterAgent
     from .planner import PlannerAgent
-    from .base_agent import BaseAgent
+    from .base_agent import BaseAgent, MODELS_CASCADE
 except ImportError:
     from researcher import ResearcherAgent
     from copywriter import CopywriterAgent
     from planner import PlannerAgent
-    from base_agent import BaseAgent
+    from base_agent import BaseAgent, MODELS_CASCADE
 
 
 def _find_data_dir():
@@ -78,22 +78,32 @@ class ManagerAgent(BaseAgent):
             json.dump(data, f, indent=2, default=str)
 
     async def _call_gemini(self, prompt: str) -> str:
-        """Helper to call Gemini synchronously in a thread and return text."""
+        """Helper to call Gemini with exponential backoff and model cascade."""
         last_error = None
-        for attempt in range(1, self.max_retries + 1):
-            try:
-                response = await asyncio.to_thread(
-                    self.client.models.generate_content,
-                    model=self.model,
-                    contents=prompt
-                )
-                return response.text if response.text else ""
-            except Exception as e:
-                last_error = e
-                if attempt >= self.max_retries or not self._is_retryable_error(e):
-                    break
-                await asyncio.sleep(min(2 ** (attempt - 1), 6))
-        raise last_error
+        for model in MODELS_CASCADE:
+            for attempt in range(3):
+                try:
+                    response = await asyncio.to_thread(
+                        self.client.models.generate_content,
+                        model=model,
+                        contents=prompt
+                    )
+                    if response and response.text:
+                        return response.text
+                except Exception as e:
+                    last_error = e
+                    err_str = str(e).lower()
+                    is_transient = any(term in err_str for term in [
+                        "503", "unavailable", "high demand", "429", "resource_exhausted", "timeout", "timed out"
+                    ])
+                    print(f"[Manager] Transient error on {model} (attempt {attempt + 1}/3): {e}")
+                    if is_transient and attempt < 2:
+                        await asyncio.sleep(1.2 * (attempt + 1))
+                        continue
+                    break  # Try next model in cascade
+        if last_error:
+            raise last_error
+        return ""
 
     def _parse_json_response(self, text: str, fallback: dict) -> dict:
         """Extract JSON from a Gemini response that may contain markdown fences."""
@@ -175,7 +185,7 @@ class ManagerAgent(BaseAgent):
 
 Review the following outputs for:
 1. **Brand Alignment**: Does the content match Millibro's brand? (minimalist, literary, warm, forest green & cream aesthetic)
-2. **Platform Optimization**: Are the X, Substack, YouTube, Instagram, and SEO deliverables each optimized for their channel?
+2. **Platform Optimization**: Is the X post optimized for X's algorithm? Is the Substack post structured for newsletter best practices?
 3. **CTA Effectiveness**: Are the calls-to-action compelling but not pushy?
 4. **Content Quality**: Is the writing sharp, engaging, and free of clichés?
 5. **Strategic Coherence**: Does the plan make sense with the content?
@@ -278,7 +288,7 @@ Respond ONLY in this JSON format:
 Score based on these criteria (each out of 25):
 1. **Content Quality** (25pts): Writing quality, creativity, engagement hooks
 2. **Brand Alignment** (25pts): Matches Millibro's minimalist, literary, warm voice
-3. **Platform Optimization** (25pts): Each X, Substack, YouTube, Instagram, and SEO deliverable follows channel best practices
+3. **Platform Optimization** (25pts): X post is optimized for X, Substack for newsletters
 4. **Conversion Potential** (25pts): Likelihood of converting readers into Millibro users
 
 --- COPYWRITER OUTPUT ---
