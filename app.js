@@ -160,30 +160,62 @@ class MarketingAgentApp {
             });
         });
 
-        // 3D Tilt Dynamics
+        // 3D Tilt Dynamics & Spatial Physics
         const tiltRig = document.getElementById('tiltRig');
         const backdropText = document.getElementById('backdropText');
         this.is3DActive = true;
 
+        // Mouse Parallax
         window.addEventListener('mousemove', (e) => {
-            if (!this.is3DActive || window.innerWidth < 980 || !tiltRig) return;
+            if (!this.is3DActive || !tiltRig) return;
             const x = (e.clientX / window.innerWidth) - 0.5;
             const y = (e.clientY / window.innerHeight) - 0.5;
 
-            const rx = -y * 14;
-            const ry = x * 18;
+            const rx = -y * (this.isMobile() ? 7 : 14);
+            const ry = x * (this.isMobile() ? 9 : 18);
 
             tiltRig.style.transform = `rotateX(${rx}deg) rotateY(${ry}deg)`;
-            if (backdropText) {
+            if (backdropText && window.innerWidth >= 980) {
                 backdropText.style.transform = `translate(calc(-50% + ${-x * 35}px), calc(-50% + ${-y * 20}px))`;
             }
         });
 
         window.addEventListener('mouseleave', () => {
-            if (tiltRig) {
+            if (tiltRig && !this.isMobile()) {
                 tiltRig.style.transform = 'rotateX(0deg) rotateY(0deg)';
             }
         });
+
+        // Touch Parallax (Mobile)
+        window.addEventListener('touchmove', (e) => {
+            if (!this.is3DActive || !tiltRig || !e.touches || e.touches.length === 0) return;
+            if (e.target.closest('.chat-history, .agent-dock-column, .hud-metrics-column, textarea, input, button, .modal')) return;
+            const t = e.touches[0];
+            const x = (t.clientX / window.innerWidth) - 0.5;
+            const y = (t.clientY / window.innerHeight) - 0.5;
+            const rx = -y * 8;
+            const ry = x * 10;
+            tiltRig.style.transform = `rotateX(${rx}deg) rotateY(${ry}deg)`;
+        }, { passive: true });
+
+        window.addEventListener('touchend', () => {
+            if (tiltRig && this.is3DActive && this.isMobile()) {
+                tiltRig.style.transform = '';
+            }
+        }, { passive: true });
+
+        // Device Orientation (Gyroscope Tilt Physics on Mobile)
+        if (window.DeviceOrientationEvent) {
+            window.addEventListener('deviceorientation', (e) => {
+                if (!this.is3DActive || !tiltRig) return;
+                const gamma = e.gamma || 0; // Left-to-right tilt (-90 to 90)
+                const beta = e.beta || 0;   // Front-to-back tilt (-180 to 180)
+                if (Math.abs(gamma) < 0.5 && Math.abs(beta) < 0.5) return;
+                const ry = Math.max(-10, Math.min(10, (gamma / 25) * 8));
+                const rx = Math.max(-8, Math.min(8, ((beta - 45) / 25) * 6));
+                tiltRig.style.transform = `rotateX(${-rx}deg) rotateY(${ry}deg)`;
+            }, { passive: true });
+        }
 
         const interactiveToggle = document.getElementById('interactiveToggle');
         if (interactiveToggle) {
@@ -197,15 +229,42 @@ class MarketingAgentApp {
             });
         }
 
+        // Mascot Mug ("Milli") Interactive Tap
+        const mascotMug = document.getElementById('mascotMug');
+        if (mascotMug) {
+            let isMascotCheering = false;
+            mascotMug.addEventListener('click', () => {
+                if (isMascotCheering) return;
+                isMascotCheering = true;
+                mascotMug.classList.add('mascot-cheer');
+                setTimeout(() => {
+                    mascotMug.classList.remove('mascot-cheer');
+                    isMascotCheering = false;
+                }, 800);
+            });
+        }
+
+        // Peach Rotary Dial Interaction
         const peachDial = document.getElementById('peachDial');
         let dialRot = 0;
         if (peachDial) {
             peachDial.addEventListener('click', () => {
                 dialRot += 45;
-                peachDial.style.transform = `rotate(${dialRot}deg) scale(1.1)`;
+                peachDial.style.transform = `rotate(${dialRot}deg) scale(1.12)`;
                 setTimeout(() => {
                     peachDial.style.transform = `rotate(${dialRot}deg) scale(1)`;
                 }, 200);
+            });
+        }
+
+        // Glossy Mint Sphere Interaction
+        const mintSphere = document.querySelector('.mint-gloss-sphere');
+        if (mintSphere) {
+            mintSphere.addEventListener('click', () => {
+                mintSphere.style.transform = 'scale(1.3) translateY(-14px)';
+                setTimeout(() => {
+                    mintSphere.style.transform = '';
+                }, 350);
             });
         }
 
@@ -708,6 +767,11 @@ class MarketingAgentApp {
 
         this.updatePipelineStep(stepId, status, message);
 
+        const cyanLed = document.querySelector('.cyan-led-strip');
+        if (cyanLed && (status === 'active' || status === 'reworking')) {
+            cyanLed.classList.add('working');
+        }
+
         if (status === 'active' && !this.agentTimers[stepId]) {
             this.agentTimers[stepId] = Date.now();
         }
@@ -842,6 +906,11 @@ class MarketingAgentApp {
 
         this.isProcessing = false;
         this.sendBtn.disabled = this.userInput.value.trim() === '';
+
+        const cyanLed = document.querySelector('.cyan-led-strip');
+        if (cyanLed) {
+            cyanLed.classList.remove('working');
+        }
 
         if (this.pipelineBadge) {
             this.pipelineBadge.className = 'tab-badge done';
@@ -1074,6 +1143,11 @@ class MarketingAgentApp {
         }
         if (this.metricsBadge) {
             this.metricsBadge.className = 'tab-badge';
+        }
+
+        const cyanLed = document.querySelector('.cyan-led-strip');
+        if (cyanLed) {
+            cyanLed.classList.remove('working');
         }
 
         this.pipelineSteps.forEach(step => {
