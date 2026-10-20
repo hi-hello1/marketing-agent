@@ -44,6 +44,24 @@
             </div>
 
             <div class="nav-actions">
+                <!-- New Chat Button -->
+                <button id="newChatBtn" class="nav-action-btn primary-action-btn" type="button" title="Start a fresh marketing conversation">
+                    <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                        <line x1="12" y1="5" x2="12" y2="19"></line>
+                        <line x1="5" y1="12" x2="19" y2="12"></line>
+                    </svg>
+                    <span>New Campaign</span>
+                </button>
+
+                <!-- Saved Chats Button -->
+                <button id="savedChatsBtn" class="nav-action-btn" type="button" title="View past marketing conversations">
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <path d="M21 15a2 2 0 01-2 2H7l-4 4V5a2 2 0 012-2h14a2 2 0 012 2z"></path>
+                    </svg>
+                    <span>Saved Chats</span>
+                    <span class="chats-count-badge" id="savedChatsCount">0</span>
+                </button>
+
                 <!-- 3D Hardware Mode Switch -->
                 <div class="hardware-switch-widget" id="interactiveToggle" title="Toggle 3D Perspective Dynamics">
                     <span class="widget-label">Interactive 3D</span>
@@ -213,8 +231,11 @@
                     <!-- Center: Marketing Studio & Live Campaign Console -->
                     <section class="studio-center-column chat-panel">
                         <div class="studio-header">
-                            <h2 class="greeting-title">Hello There, Marketer 👋</h2>
-                            <span class="pipeline-status-tag">Live Autonomous Studio</span>
+                            <div>
+                                <h2 class="greeting-title" id="chatTitle">Hello There, Marketer 👋</h2>
+                                <span class="pipeline-status-tag" id="activeChatIndicator">Live Autonomous Studio</span>
+                            </div>
+                            <button id="studioNewChatBtn" class="studio-quick-new-btn" type="button" title="Start a fresh campaign">+ New Campaign</button>
                         </div>
 
                         <!-- Chat & Campaign Stream History -->
@@ -371,6 +392,28 @@
                         <!-- Populated dynamically via app.js -->
                     </tbody>
                 </table>
+            </div>
+        </div>
+    </div>
+
+    <!-- Saved Conversations Modal -->
+    <div id="savedChatsModal" class="modal hidden">
+        <div class="modal-backdrop"></div>
+        <div class="modal-content saved-chats-modal-content">
+            <div class="modal-header">
+                <div>
+                    <h2>Saved Marketing Conversations</h2>
+                    <p class="modal-subtitle">Pick up where you left off or start a new campaign</p>
+                </div>
+                <div class="modal-header-actions">
+                    <button id="modalNewChatBtn" class="modal-cta-btn" type="button">+ New Campaign</button>
+                    <button id="closeSavedChatsModalBtn" class="icon-btn" type="button" aria-label="Close Modal">✕</button>
+                </div>
+            </div>
+            <div class="modal-body">
+                <div id="savedChatsList" class="saved-chats-grid">
+                    <!-- Populated dynamically via app.js -->
+                </div>
             </div>
         </div>
     </div>

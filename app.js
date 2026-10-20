@@ -6,9 +6,22 @@ class MarketingAgentApp {
         this.pipelineSteps = document.querySelectorAll('.pipeline-step');
         this.scoreDisplay = document.getElementById('scoreDisplay');
 
-        this.modal = document.getElementById('scoreModal');
+        // Score Modal elements
+        this.scoreModal = document.getElementById('scoreModal');
         this.scoreHistoryBtn = document.getElementById('scoreHistoryBtn');
         this.closeModalBtn = document.getElementById('closeModalBtn');
+
+        // Conversation Management Elements
+        this.savedChatsModal = document.getElementById('savedChatsModal');
+        this.savedChatsBtn = document.getElementById('savedChatsBtn');
+        this.savedChatsCount = document.getElementById('savedChatsCount');
+        this.savedChatsList = document.getElementById('savedChatsList');
+        this.newChatBtn = document.getElementById('newChatBtn');
+        this.studioNewChatBtn = document.getElementById('studioNewChatBtn');
+        this.modalNewChatBtn = document.getElementById('modalNewChatBtn');
+        this.closeSavedChatsModalBtn = document.getElementById('closeSavedChatsModalBtn');
+        this.chatTitle = document.getElementById('chatTitle');
+        this.activeChatIndicator = document.getElementById('activeChatIndicator');
 
         // Mobile elements
         this.mobileTabs = document.getElementById('mobileTabs');
@@ -18,6 +31,8 @@ class MarketingAgentApp {
         this.activePanel = 'chat';
 
         this.isProcessing = false;
+        this.currentSessionId = localStorage.getItem('millibro_session_id') || null;
+        this.currentRoute = null;
         this.agentOutputs = {};
         this.agentTimers = {};
         this.sseBuffer = '';
@@ -25,6 +40,7 @@ class MarketingAgentApp {
         this.initViewportHeight();
         this.initEventListeners();
         this.initMobileLayout();
+        this.initSession();
     }
 
     initViewportHeight() {
@@ -41,7 +57,6 @@ class MarketingAgentApp {
     }
 
     initEventListeners() {
-        // Touch, scroll, and wheel interaction tracking to prevent fighting user swipes
         this.isUserInteracting = false;
         let interactionTimer = null;
         const markUserInteracting = () => {
@@ -71,20 +86,50 @@ class MarketingAgentApp {
 
         this.userInput.addEventListener('input', () => {
             this.sendBtn.disabled = this.userInput.value.trim() === '' || this.isProcessing;
-            // Auto-resize textarea
             this.userInput.style.height = 'auto';
             this.userInput.style.height = Math.min(this.userInput.scrollHeight, 160) + 'px';
         });
 
-        this.scoreHistoryBtn.addEventListener('click', () => this.showScoreHistory());
-        this.closeModalBtn.addEventListener('click', () => {
-            this.modal.classList.add('hidden');
-        });
+        // Score modal
+        if (this.scoreHistoryBtn) {
+            this.scoreHistoryBtn.addEventListener('click', () => this.showScoreHistory());
+        }
+        if (this.closeModalBtn) {
+            this.closeModalBtn.addEventListener('click', () => {
+                if (this.scoreModal) this.scoreModal.classList.add('hidden');
+            });
+        }
+        if (this.scoreModal) {
+            this.scoreModal.addEventListener('click', (e) => {
+                if (e.target === this.scoreModal) this.scoreModal.classList.add('hidden');
+            });
+        }
 
-        // Close modal on backdrop click
-        this.modal.addEventListener('click', (e) => {
-            if (e.target === this.modal) this.modal.classList.add('hidden');
-        });
+        // Saved Chats modal & buttons
+        if (this.savedChatsBtn) {
+            this.savedChatsBtn.addEventListener('click', () => this.showSavedChats());
+        }
+        if (this.closeSavedChatsModalBtn) {
+            this.closeSavedChatsModalBtn.addEventListener('click', () => {
+                if (this.savedChatsModal) this.savedChatsModal.classList.add('hidden');
+            });
+        }
+        if (this.savedChatsModal) {
+            this.savedChatsModal.addEventListener('click', (e) => {
+                if (e.target === this.savedChatsModal) this.savedChatsModal.classList.add('hidden');
+            });
+        }
+
+        // New Campaign buttons
+        if (this.newChatBtn) {
+            this.newChatBtn.addEventListener('click', () => this.startNewConversation());
+        }
+        if (this.studioNewChatBtn) {
+            this.studioNewChatBtn.addEventListener('click', () => this.startNewConversation());
+        }
+        if (this.modalNewChatBtn) {
+            this.modalNewChatBtn.addEventListener('click', () => this.startNewConversation());
+        }
 
         // Expand/collapse pipeline steps
         this.pipelineSteps.forEach(step => {
@@ -103,7 +148,7 @@ class MarketingAgentApp {
             });
         });
 
-        // Interactive 3D Perspective Tilt Physics (Planet Jumping Inspired)
+        // 3D Tilt Dynamics
         const tiltRig = document.getElementById('tiltRig');
         const backdropText = document.getElementById('backdropText');
         this.is3DActive = true;
@@ -128,7 +173,6 @@ class MarketingAgentApp {
             }
         });
 
-        // Interactive mode toggle
         const interactiveToggle = document.getElementById('interactiveToggle');
         if (interactiveToggle) {
             interactiveToggle.addEventListener('click', () => {
@@ -141,7 +185,6 @@ class MarketingAgentApp {
             });
         }
 
-        // Peach Rotary Dial Interaction
         const peachDial = document.getElementById('peachDial');
         let dialRot = 0;
         if (peachDial) {
@@ -169,6 +212,281 @@ class MarketingAgentApp {
         });
     }
 
+    // --- Conversation & Memory Management ---
+
+    async initSession() {
+        await this.updateSavedChatsCount();
+
+        // If we have a saved session ID from a previous visit, load it!
+        if (this.currentSessionId) {
+            const loaded = await this.loadConversation(this.currentSessionId, false);
+            if (loaded) return;
+        }
+
+        // Otherwise check if there are any conversations on the server
+        try {
+            const res = await fetch('/api/conversations');
+            if (res.ok) {
+                const list = await res.json();
+                if (list && list.length > 0) {
+                    // Load the most recently updated conversation
+                    await this.loadConversation(list[0].id, false);
+                    return;
+                }
+            }
+        } catch (e) {
+            console.log('Error checking conversations on startup:', e);
+        }
+
+        // If no conversations exist, show welcome banner and start ready
+        this.renderWelcomeCard();
+    }
+
+    async updateSavedChatsCount() {
+        try {
+            const res = await fetch('/api/conversations');
+            if (res.ok) {
+                const list = await res.json();
+                if (this.savedChatsCount) {
+                    this.savedChatsCount.textContent = list.length;
+                }
+                return list.length;
+            }
+        } catch {
+            // Ignore offline/startup
+        }
+        return 0;
+    }
+
+    async loadConversation(sessionId, switchToChat = true) {
+        try {
+            const res = await fetch(`/api/conversations/${sessionId}`);
+            if (!res.ok) return false;
+            const conv = await res.json();
+
+            this.currentSessionId = conv.id;
+            localStorage.setItem('millibro_session_id', conv.id);
+
+            if (this.chatTitle) {
+                this.chatTitle.textContent = conv.title || 'Marketing Campaign';
+            }
+            if (this.activeChatIndicator) {
+                this.activeChatIndicator.textContent = `Campaign: ${conv.title || 'Active'}`;
+            }
+
+            // Clear chat history
+            this.chatHistory.innerHTML = '';
+
+            const messages = conv.messages || [];
+            if (messages.length === 0) {
+                this.renderWelcomeCard();
+            } else {
+                for (const msg of messages) {
+                    if (msg.role === 'user') {
+                        this.addUserMessage(msg.content, msg.timestamp);
+                    } else {
+                        let html = '';
+                        const route = msg.route || 'direct_answer';
+                        if (route === 'full_pipeline' && msg.agent_outputs && Object.keys(msg.agent_outputs).length > 0) {
+                            html = '<div class="final-output">';
+                            html += '<h2 style="margin-bottom: 16px; color: var(--text-primary);">📋 Marketing Campaign Output</h2>';
+                            if (msg.agent_outputs.researcher) {
+                                html += `<details style="margin-bottom: 16px;"><summary style="cursor:pointer; font-weight:600; color: var(--researcher-color);">🔍 Research Report</summary><div style="margin-top:8px;">${marked.parse(msg.agent_outputs.researcher)}</div></details>`;
+                            }
+                            if (msg.agent_outputs.copywriter) {
+                                html += `<div style="margin-bottom: 16px; padding: 16px; background: rgba(16,185,129,0.05); border: 1px solid rgba(16,185,129,0.15); border-radius: 12px;"><h3 style="color: var(--copywriter-color); margin-bottom: 8px;">✍️ Content</h3>${marked.parse(msg.agent_outputs.copywriter)}</div>`;
+                            }
+                            if (msg.agent_outputs.planner) {
+                                html += `<div style="margin-bottom: 16px; padding: 16px; background: rgba(245,158,11,0.05); border: 1px solid rgba(245,158,11,0.15); border-radius: 12px;"><h3 style="color: var(--planner-color); margin-bottom: 8px;">📋 Posting Plan</h3>${marked.parse(msg.agent_outputs.planner)}</div>`;
+                            }
+                            html += '</div>';
+                        } else if (route === 'copywriter' && msg.agent_outputs?.copywriter) {
+                            html = `<div style="padding: 16px; background: rgba(16,185,129,0.05); border: 1px solid rgba(16,185,129,0.15); border-radius: 12px;"><h3 style="color: var(--copywriter-color); margin-bottom: 8px;">✍️ Revised Copy</h3>${marked.parse(msg.agent_outputs.copywriter)}</div>`;
+                        } else {
+                            html = marked.parse(msg.content || '');
+                        }
+                        this.addAgentMessage(html, route, msg.timestamp);
+                    }
+                }
+            }
+
+            // Restore score if available
+            if (conv.campaign_context?.latest_score) {
+                const scoredMsg = [...messages].reverse().find(m => m.score_data && m.score_data.score);
+                if (scoredMsg && scoredMsg.score_data) {
+                    const s = scoredMsg.score_data;
+                    this.showScore(s.score, s.reasoning, 0, s.breakdown, 0);
+                }
+            }
+
+            if (this.savedChatsModal) {
+                this.savedChatsModal.classList.add('hidden');
+            }
+
+            if (switchToChat && this.isMobile()) {
+                this.switchPanel('chat');
+            }
+
+            this.forceScrollToBottom();
+            return true;
+        } catch (e) {
+            console.error('Failed to load conversation:', e);
+            return false;
+        }
+    }
+
+    async startNewConversation() {
+        try {
+            const res = await fetch('/api/conversations/new', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ title: 'New Marketing Campaign' })
+            });
+            if (res.ok) {
+                const conv = await res.json();
+                this.currentSessionId = conv.id;
+                localStorage.setItem('millibro_session_id', conv.id);
+            } else {
+                this.currentSessionId = 'conv_' + Date.now();
+                localStorage.setItem('millibro_session_id', this.currentSessionId);
+            }
+        } catch {
+            this.currentSessionId = 'conv_' + Date.now();
+            localStorage.setItem('millibro_session_id', this.currentSessionId);
+        }
+
+        if (this.chatTitle) {
+            this.chatTitle.textContent = 'Hello There, Marketer 👋';
+        }
+        if (this.activeChatIndicator) {
+            this.activeChatIndicator.textContent = 'Live Autonomous Studio';
+        }
+
+        this.chatHistory.innerHTML = '';
+        this.renderWelcomeCard();
+        this.resetPipeline();
+
+        if (this.savedChatsModal) {
+            this.savedChatsModal.classList.add('hidden');
+        }
+
+        await this.updateSavedChatsCount();
+
+        if (this.isMobile()) {
+            this.switchPanel('chat');
+        }
+    }
+
+    async deleteConversation(sessionId, e) {
+        if (e) e.stopPropagation();
+        if (!confirm('Are you sure you want to delete this marketing conversation?')) return;
+        try {
+            await fetch(`/api/conversations/${sessionId}`, { method: 'DELETE' });
+            if (this.currentSessionId === sessionId) {
+                localStorage.removeItem('millibro_session_id');
+                await this.startNewConversation();
+            } else {
+                await this.showSavedChats();
+                await this.updateSavedChatsCount();
+            }
+        } catch (err) {
+            console.error('Failed to delete conversation:', err);
+        }
+    }
+
+    async showSavedChats() {
+        if (!this.savedChatsModal) return;
+        this.savedChatsModal.classList.remove('hidden');
+        const container = document.getElementById('savedChatsList');
+        if (!container) return;
+
+        container.innerHTML = '<div style="text-align:center; padding:24px; color:var(--muted);">Loading conversations...</div>';
+
+        try {
+            const res = await fetch('/api/conversations');
+            if (!res.ok) throw new Error('Failed to fetch conversations');
+            const list = await res.json();
+
+            if (list.length === 0) {
+                container.innerHTML = `
+                    <div class="empty-chats-banner">
+                        <div style="font-size:2rem; margin-bottom:8px;">💬</div>
+                        <h3 style="color:var(--ink); font-size:1.05rem;">No saved conversations yet</h3>
+                        <p>Ask a question or launch a marketing campaign to start saving your chat history.</p>
+                    </div>
+                `;
+                return;
+            }
+
+            container.innerHTML = list.map(c => {
+                const isActive = c.id === this.currentSessionId;
+                const dateStr = c.updated_at
+                    ? new Date(c.updated_at).toLocaleDateString([], { month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' })
+                    : 'Recent';
+                const scoreHtml = c.latest_score
+                    ? `<span class="meta-chip score-chip">Score: ${c.latest_score}/100</span>`
+                    : '';
+                return `
+                    <div class="saved-chat-card ${isActive ? 'active' : ''}" data-id="${c.id}">
+                        <div class="chat-card-info">
+                            <div class="chat-card-title">${this.escapeHtml(c.title || 'Untitled Campaign')}</div>
+                            <div class="chat-card-meta">
+                                <span>${dateStr}</span>
+                                <span class="meta-chip">${c.message_count} message${c.message_count === 1 ? '' : 's'}</span>
+                                ${scoreHtml}
+                                ${isActive ? '<span class="meta-chip" style="background:#7c3aed; color:#fff;">Active</span>' : ''}
+                            </div>
+                        </div>
+                        <button class="chat-delete-btn" data-delete-id="${c.id}" title="Delete Conversation" aria-label="Delete">🗑️</button>
+                    </div>
+                `;
+            }).join('');
+
+            container.querySelectorAll('.saved-chat-card').forEach(card => {
+                card.addEventListener('click', (e) => {
+                    if (e.target.closest('.chat-delete-btn')) return;
+                    const id = card.getAttribute('data-id');
+                    if (id) this.loadConversation(id);
+                });
+            });
+
+            container.querySelectorAll('.chat-delete-btn').forEach(btn => {
+                btn.addEventListener('click', (e) => {
+                    const id = btn.getAttribute('data-delete-id');
+                    if (id) this.deleteConversation(id, e);
+                });
+            });
+
+        } catch (err) {
+            container.innerHTML = `<div style="text-align:center; padding:24px; color:#ef4444;">Error loading conversations: ${err.message}</div>`;
+        }
+    }
+
+    renderWelcomeCard() {
+        const welcomeHtml = `
+            <div class="chat-message agent welcome">
+                <div class="welcome-holo-banner">
+                    <div class="banner-tags-row">
+                        <span class="banner-chip">AUTONOMOUS WORKFLOW</span>
+                        <span style="font-size:0.78rem; color:#10b981; font-weight:600;">● Engine Ready</span>
+                    </div>
+                    <p class="banner-desc">
+                        Welcome to Millibro Marketing Studio. Describe your product, launch goal, or ask any marketing question. Your autonomous fleet will orchestrate competitive research, craft persuasive multi-channel copy, and verify quality. When asking follow-ups, the Marketing Director will answer you directly without unnecessary agent calls.
+                    </p>
+                    <div class="checklist-preview-grid">
+                        <div class="check-card"><span>🔍</span> Deep Audience & Trend Discovery</div>
+                        <div class="check-card"><span>✍️</span> High-Converting Hook & Story Thread</div>
+                        <div class="check-card"><span>📋</span> Optimal Multi-Channel Schedule</div>
+                        <div class="check-card"><span>🎯</span> 4-Metric Conversion Quality Score</div>
+                    </div>
+                </div>
+            </div>
+        `;
+        this.chatHistory.innerHTML = welcomeHtml;
+    }
+
+    // --- Message Sending & Event Pipeline ---
+
     async handleSend() {
         const text = this.userInput.value.trim();
         if (!text || this.isProcessing) return;
@@ -180,26 +498,27 @@ class MarketingAgentApp {
         this.isProcessing = true;
         this.agentOutputs = {};
         this.sseBuffer = '';
+        this.currentRoute = null;
 
         this.resetPipeline();
 
-        // Update pipeline tab badge to active
         if (this.pipelineBadge) {
             this.pipelineBadge.className = 'tab-badge active';
         }
 
-        // On mobile, switch to pipeline tab once so user sees agents starting and hide starter chips
         if (this.isMobile()) {
             const chips = document.querySelector('.starter-chips-carousel');
             if (chips) chips.style.display = 'none';
-            this.switchPanel('pipeline');
         }
 
         try {
             const response = await fetch('/api/chat', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ message: text })
+                body: JSON.stringify({
+                    message: text,
+                    session_id: this.currentSessionId
+                })
             });
 
             if (!response.ok) {
@@ -214,10 +533,8 @@ class MarketingAgentApp {
                 if (done) break;
 
                 this.sseBuffer += decoder.decode(value, { stream: true });
-
-                // Split on double newlines (SSE event separator)
                 const events = this.sseBuffer.split('\n\n');
-                this.sseBuffer = events.pop(); // Keep incomplete event in buffer
+                this.sseBuffer = events.pop();
 
                 for (const block of events) {
                     if (!block.trim()) continue;
@@ -226,7 +543,10 @@ class MarketingAgentApp {
             }
         } catch (error) {
             console.error('Pipeline error:', error);
-            this.addAgentMessage(`<div class="error-message">⚠️ Connection error: ${this.escapeHtml(error.message)}<br>Make sure the server is running on <code>http://localhost:8000</code></div>`);
+            this.addAgentMessage(
+                `<div class="error-message">⚠️ Connection error: ${this.escapeHtml(error.message)}<br>Make sure the server is running on <code>http://localhost:8000</code></div>`,
+                'error'
+            );
             this.isProcessing = false;
             this.sendBtn.disabled = this.userInput.value.trim() === '';
             if (this.pipelineBadge) {
@@ -260,6 +580,12 @@ class MarketingAgentApp {
 
     handleEvent(event, data) {
         switch (event) {
+            case 'session_info':
+                this.handleSessionInfo(data);
+                break;
+            case 'routing_decision':
+                this.handleRoutingDecision(data);
+                break;
             case 'workflow_step':
                 this.handleWorkflowStep(data);
                 break;
@@ -279,29 +605,66 @@ class MarketingAgentApp {
                 this.handleDone(data);
                 break;
             case 'keepalive':
-                // ignore
                 break;
             default:
                 console.log('Unknown event:', event, data);
         }
     }
 
-    // --- Map backend agent names to frontend data-agent attributes ---
+    handleSessionInfo(data) {
+        if (data.session_id) {
+            this.currentSessionId = data.session_id;
+            localStorage.setItem('millibro_session_id', data.session_id);
+        }
+        if (data.title) {
+            if (this.chatTitle) {
+                this.chatTitle.textContent = data.title;
+            }
+            if (this.activeChatIndicator) {
+                this.activeChatIndicator.textContent = `Campaign: ${data.title}`;
+            }
+        }
+        this.updateSavedChatsCount();
+    }
+
+    handleRoutingDecision(data) {
+        this.currentRoute = data.route;
+        const reasoning = data.reasoning || '';
+
+        // If the route is a single agent or direct answer, update steps appropriately
+        if (data.route === 'direct_answer') {
+            this.updatePipelineStep('researcher', 'skipped', 'Skipped • Manager answering directly');
+            this.updatePipelineStep('copywriter', 'skipped', 'Skipped • Manager answering directly');
+            this.updatePipelineStep('planner', 'skipped', 'Skipped • Manager answering directly');
+            this.updatePipelineStep('manager-review', 'skipped', 'Skipped • Direct consultation');
+            this.updatePipelineStep('manager-plan', 'active', `Marketing Director answering directly: ${reasoning}`);
+        } else if (data.route === 'copywriter') {
+            this.updatePipelineStep('researcher', 'skipped', 'Skipped • Copy request only');
+            this.updatePipelineStep('planner', 'skipped', 'Skipped • Copy request only');
+            this.updatePipelineStep('manager-plan', 'completed', `Delegated to Copywriter: ${reasoning}`);
+        } else if (data.route === 'researcher') {
+            this.updatePipelineStep('copywriter', 'skipped', 'Skipped • Research request only');
+            this.updatePipelineStep('planner', 'skipped', 'Skipped • Research request only');
+            this.updatePipelineStep('manager-plan', 'completed', `Delegated to Researcher: ${reasoning}`);
+        } else if (data.route === 'planner') {
+            this.updatePipelineStep('researcher', 'skipped', 'Skipped • Schedule request only');
+            this.updatePipelineStep('copywriter', 'skipped', 'Skipped • Schedule request only');
+            this.updatePipelineStep('manager-plan', 'completed', `Delegated to Planner: ${reasoning}`);
+        }
+    }
+
     mapAgentToStep(agentName) {
-        // The backend sends "manager" for both planning and review phases.
-        // We differentiate based on context/status.
         const mapping = {
             'researcher': 'researcher',
             'copywriter': 'copywriter',
             'planner': 'planner',
-            'manager': null, // handled specially
+            'manager': null,
             'system': null
         };
         return mapping[agentName] || agentName;
     }
 
     getManagerStep(message) {
-        // Determine if the manager event is planning or reviewing
         if (!message) return 'manager-plan';
         const msg = message.toLowerCase();
         if (msg.includes('review') || msg.includes('scor')) {
@@ -317,8 +680,6 @@ class MarketingAgentApp {
         return this.mapAgentToStep(agentName);
     }
 
-    // --- Event Handlers ---
-
     handleWorkflowStep(data) {
         const agent = data.agent;
         const status = data.status || 'active';
@@ -329,7 +690,6 @@ class MarketingAgentApp {
 
         this.updatePipelineStep(stepId, status, message);
 
-        // Start timer for this step
         if (status === 'active' && !this.agentTimers[stepId]) {
             this.agentTimers[stepId] = Date.now();
         }
@@ -339,12 +699,10 @@ class MarketingAgentApp {
         const agent = data.agent;
         const delta = data.delta || '';
 
-        // Determine which pipeline step this belongs to
         let stepId;
         if (agent === 'manager') {
-            // Check if manager-review is active
             const reviewStep = document.querySelector('.pipeline-step[data-agent="manager-review"]');
-            if (reviewStep && (reviewStep.classList.contains('active') || reviewStep.classList.contains('completed'))) {
+            if (reviewStep && (reviewStep.classList.contains('active') || reviewStep.classList.contains('completed')) && this.currentRoute === 'full_pipeline') {
                 stepId = 'manager-review';
             } else {
                 stepId = 'manager-plan';
@@ -355,7 +713,6 @@ class MarketingAgentApp {
 
         if (!stepId) return;
 
-        // Accumulate output
         if (!this.agentOutputs[stepId]) this.agentOutputs[stepId] = '';
         this.agentOutputs[stepId] += delta;
 
@@ -369,7 +726,7 @@ class MarketingAgentApp {
         let stepId;
         if (agent === 'manager') {
             const reviewStep = document.querySelector('.pipeline-step[data-agent="manager-review"]');
-            if (reviewStep && (reviewStep.classList.contains('active') || reviewStep.classList.contains('completed'))) {
+            if (reviewStep && (reviewStep.classList.contains('active') || reviewStep.classList.contains('completed')) && this.currentRoute === 'full_pipeline') {
                 stepId = 'manager-review';
             } else {
                 stepId = 'manager-plan';
@@ -380,10 +737,8 @@ class MarketingAgentApp {
 
         if (!stepId) return;
 
-        // Store the final content
         this.agentOutputs[stepId] = content;
 
-        // Update elapsed time
         if (this.agentTimers[stepId]) {
             const elapsed = ((Date.now() - this.agentTimers[stepId]) / 1000).toFixed(1);
             const step = document.querySelector(`.pipeline-step[data-agent="${stepId}"]`);
@@ -401,18 +756,16 @@ class MarketingAgentApp {
         const agent = data.agent;
         const feedback = data.feedback || '';
         const attempt = data.attempt || 1;
-
         const stepId = this.mapAgentToStep(agent) || agent;
 
         this.updatePipelineStep(stepId, 'reworking', `Rework #${attempt}: ${feedback}`);
 
-        // Also show rework notification in chat
         this.addAgentMessage(`
             <div style="color: var(--score-fair); border-left: 3px solid var(--score-fair); padding-left: 12px;">
                 <strong>🔄 Rework requested for ${agent}</strong> (Attempt ${attempt}/2)<br>
                 <em>${this.escapeHtml(feedback)}</em>
             </div>
-        `);
+        `, 'rework');
     }
 
     handleScore(data) {
@@ -426,28 +779,44 @@ class MarketingAgentApp {
     }
 
     handleDone(data) {
-        // Build final response for chat from all agent outputs
-        let finalHtml = '<div class="final-output">';
-        finalHtml += '<h2 style="margin-bottom: 16px; color: var(--text-primary);">📋 Marketing Campaign Output</h2>';
+        const route = data.route || this.currentRoute || 'direct_answer';
+        let finalHtml = '';
 
-        if (this.agentOutputs['researcher']) {
-            finalHtml += `<details style="margin-bottom: 16px;"><summary style="cursor:pointer; font-weight:600; color: var(--researcher-color);">🔍 Research Report</summary><div style="margin-top:8px;">${marked.parse(this.agentOutputs['researcher'])}</div></details>`;
-        }
-        if (this.agentOutputs['copywriter']) {
-            finalHtml += `<div style="margin-bottom: 16px; padding: 16px; background: rgba(16,185,129,0.05); border: 1px solid rgba(16,185,129,0.15); border-radius: 12px;"><h3 style="color: var(--copywriter-color); margin-bottom: 8px;">✍️ Content</h3>${marked.parse(this.agentOutputs['copywriter'])}</div>`;
-        }
-        if (this.agentOutputs['planner']) {
-            finalHtml += `<div style="margin-bottom: 16px; padding: 16px; background: rgba(245,158,11,0.05); border: 1px solid rgba(245,158,11,0.15); border-radius: 12px;"><h3 style="color: var(--planner-color); margin-bottom: 8px;">📋 Posting Plan</h3>${marked.parse(this.agentOutputs['planner'])}</div>`;
+        if (route === 'direct_answer') {
+            // Direct manager answer
+            const content = this.agentOutputs['manager-plan'] || data.message || '';
+            finalHtml = marked.parse(content);
+        } else if (route === 'copywriter') {
+            const copyContent = this.agentOutputs['copywriter'] || data.content || '';
+            finalHtml = `<div style="padding: 16px; background: rgba(16,185,129,0.05); border: 1px solid rgba(16,185,129,0.15); border-radius: 12px;"><h3 style="color: var(--copywriter-color); margin-bottom: 8px;">✍️ Revised Copy</h3>${marked.parse(copyContent)}</div>`;
+        } else if (route === 'researcher') {
+            const resContent = this.agentOutputs['researcher'] || data.content || '';
+            finalHtml = `<div style="padding: 16px; background: rgba(6,182,212,0.05); border: 1px solid rgba(6,182,212,0.15); border-radius: 12px;"><h3 style="color: var(--researcher-color); margin-bottom: 8px;">🔍 Market Research</h3>${marked.parse(resContent)}</div>`;
+        } else if (route === 'planner') {
+            const planContent = this.agentOutputs['planner'] || data.content || '';
+            finalHtml = `<div style="padding: 16px; background: rgba(245,158,11,0.05); border: 1px solid rgba(245,158,11,0.15); border-radius: 12px;"><h3 style="color: var(--planner-color); margin-bottom: 8px;">📋 Strategy Plan</h3>${marked.parse(planContent)}</div>`;
+        } else {
+            // Full 5-agent pipeline output
+            finalHtml = '<div class="final-output">';
+            finalHtml += '<h2 style="margin-bottom: 16px; color: var(--text-primary);">📋 Marketing Campaign Output</h2>';
+
+            if (this.agentOutputs['researcher']) {
+                finalHtml += `<details style="margin-bottom: 16px;"><summary style="cursor:pointer; font-weight:600; color: var(--researcher-color);">🔍 Research Report</summary><div style="margin-top:8px;">${marked.parse(this.agentOutputs['researcher'])}</div></details>`;
+            }
+            if (this.agentOutputs['copywriter']) {
+                finalHtml += `<div style="margin-bottom: 16px; padding: 16px; background: rgba(16,185,129,0.05); border: 1px solid rgba(16,185,129,0.15); border-radius: 12px;"><h3 style="color: var(--copywriter-color); margin-bottom: 8px;">✍️ Content</h3>${marked.parse(this.agentOutputs['copywriter'])}</div>`;
+            }
+            if (this.agentOutputs['planner']) {
+                finalHtml += `<div style="margin-bottom: 16px; padding: 16px; background: rgba(245,158,11,0.05); border: 1px solid rgba(245,158,11,0.15); border-radius: 12px;"><h3 style="color: var(--planner-color); margin-bottom: 8px;">📋 Posting Plan</h3>${marked.parse(this.agentOutputs['planner'])}</div>`;
+            }
+            finalHtml += '</div>';
         }
 
-        finalHtml += '</div>';
-
-        // On mobile, switch to chat panel first so dimensions are resolved
         if (this.isMobile()) {
             this.switchPanel('chat');
         }
 
-        const msgEl = this.addAgentMessage(finalHtml);
+        const msgEl = this.addAgentMessage(finalHtml, route);
 
         this.isProcessing = false;
         this.sendBtn.disabled = this.userInput.value.trim() === '';
@@ -456,8 +825,9 @@ class MarketingAgentApp {
             this.pipelineBadge.className = 'tab-badge done';
         }
 
+        this.updateSavedChatsCount();
+
         if (this.isMobile()) {
-            // On mobile, smoothly scroll so user reads the campaign output from the beginning
             setTimeout(() => {
                 if (msgEl && !this.isUserInteracting && this.chatHistory) {
                     this.chatHistory.scrollTop = msgEl.offsetTop - 10;
@@ -468,21 +838,59 @@ class MarketingAgentApp {
         }
     }
 
-    // --- UI Update Functions ---
+    // --- UI Update Helpers ---
 
-    addUserMessage(text) {
+    addUserMessage(text, timestamp = null) {
+        const welcome = this.chatHistory.querySelector('.chat-message.welcome');
+        if (welcome) welcome.remove();
+
         const msg = document.createElement('div');
         msg.className = 'chat-message user';
-        msg.innerHTML = `<div class="message-content"><p>${this.escapeHtml(text)}</p></div>`;
+        const timeStr = timestamp
+            ? new Date(timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
+            : new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+
+        msg.innerHTML = `
+            <div class="message-content">
+                <p>${this.escapeHtml(text)}</p>
+                <span class="message-time-stamp" style="color: rgba(255,255,255,0.7);">${timeStr}</span>
+            </div>
+        `;
         this.chatHistory.appendChild(msg);
         this.forceScrollToBottom();
         return msg;
     }
 
-    addAgentMessage(html) {
+    addAgentMessage(html, route = 'direct', timestamp = null) {
+        const welcome = this.chatHistory.querySelector('.chat-message.welcome');
+        if (welcome) welcome.remove();
+
         const msg = document.createElement('div');
         msg.className = 'chat-message agent';
-        msg.innerHTML = `<div class="message-content markdown-output">${html}</div>`;
+        const timeStr = timestamp
+            ? new Date(timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
+            : new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+
+        let badgeHtml = '';
+        if (route === 'direct_answer' || route === 'direct') {
+            badgeHtml = '<div class="message-routing-badge direct">🧑‍💼 Marketing Director • Direct Consultation</div>';
+        } else if (route === 'copywriter') {
+            badgeHtml = '<div class="message-routing-badge copywriter">✍️ Copywriter • Targeted Copy Revision</div>';
+        } else if (route === 'researcher') {
+            badgeHtml = '<div class="message-routing-badge researcher">🔍 Researcher • Targeted Intelligence</div>';
+        } else if (route === 'planner') {
+            badgeHtml = '<div class="message-routing-badge planner">📋 Planner • Targeted Schedule Strategy</div>';
+        } else if (route === 'full_pipeline' || route === 'fleet') {
+            badgeHtml = '<div class="message-routing-badge fleet">🚀 Autonomous 5-Agent Fleet • Full Campaign</div>';
+        }
+
+        msg.innerHTML = `
+            <div class="message-content markdown-output">
+                ${badgeHtml}
+                ${html}
+                <span class="message-time-stamp">${timeStr}</span>
+            </div>
+        `;
         this.chatHistory.appendChild(msg);
         if (!this.isMobile()) {
             this.forceScrollToBottom();
@@ -502,16 +910,22 @@ class MarketingAgentApp {
             'active': '● Working',
             'completed': '✓ Done',
             'reworking': '↻ Reworking',
+            'skipped': '— Skipped',
             'error': '✗ Error'
         };
         statusSpan.textContent = statusLabels[status] || status;
 
-        if (status === 'active' || status === 'reworking') {
+        if (status === 'skipped') {
+            const content = step.querySelector('.step-content');
+            content.style.maxHeight = '0px';
+            content.style.padding = '0 20px';
+            const streamContainer = step.querySelector('.streaming-text');
+            streamContainer.textContent = message || 'Skipped (Not needed)';
+        } else if (status === 'active' || status === 'reworking') {
             const content = step.querySelector('.step-content');
             content.style.maxHeight = '500px';
             content.style.padding = '0 20px 20px 20px';
 
-            // Reset streaming text for rework
             if (status === 'reworking') {
                 const streamContainer = step.querySelector('.streaming-text');
                 streamContainer.textContent = `⚠️ ${message || 'Reworking...'}\n\n`;
@@ -547,12 +961,11 @@ class MarketingAgentApp {
         const mdContainer = step.querySelector('.markdown-output');
         try {
             mdContainer.innerHTML = marked.parse(output || '');
-        } catch (e) {
+        } catch {
             mdContainer.textContent = output || '';
         }
         mdContainer.style.display = 'block';
 
-        // Keep content scrollable and accessible
         const content = step.querySelector('.step-content');
         content.style.maxHeight = '340px';
     }
@@ -569,7 +982,6 @@ class MarketingAgentApp {
             const scoreValue = this.scoreDisplay.querySelector('.score-value');
             const reasoningContainer = this.scoreDisplay.querySelector('.score-reasoning');
 
-            // Animate number counting up
             let currentScore = 0;
             const targetScore = Math.min(Math.max(score, 0), 100);
             const interval = setInterval(() => {
@@ -582,12 +994,10 @@ class MarketingAgentApp {
                 }
             }, 20);
 
-            // Animate SVG gauge
-            const maxOffset = 283; // 2 * π * 45
+            const maxOffset = 283;
             const offset = maxOffset - (targetScore / 100) * maxOffset;
             gaugeProgress.style.strokeDashoffset = offset;
 
-            // Set color based on score
             let color = 'var(--score-excellent)';
             if (targetScore < 80) color = 'var(--score-good)';
             if (targetScore < 60) color = 'var(--score-fair)';
@@ -595,7 +1005,6 @@ class MarketingAgentApp {
             gaugeProgress.style.stroke = color;
             scoreValue.style.color = color;
 
-            // Build reasoning HTML with breakdown
             let reasoningHtml = '';
             if (previousBest > 0) {
                 const diff = targetScore - previousBest;
@@ -657,6 +1066,11 @@ class MarketingAgentApp {
         this.agentTimers = {};
     }
 
+    closeModals() {
+        if (this.scoreModal) this.scoreModal.classList.add('hidden');
+        if (this.savedChatsModal) this.savedChatsModal.classList.add('hidden');
+    }
+
     // --- Mobile Layout ---
 
     isMobile() {
@@ -664,7 +1078,6 @@ class MarketingAgentApp {
     }
 
     initMobileLayout() {
-        // Set up mobile tab click handlers
         if (this.mobileTabs) {
             const tabs = this.mobileTabs.querySelectorAll('.mobile-tab');
             tabs.forEach(tab => {
@@ -674,11 +1087,7 @@ class MarketingAgentApp {
                 });
             });
         }
-
-        // Apply initial state
         this.applyMobileState();
-
-        // Listen for resize to toggle mobile/desktop
         window.addEventListener('resize', () => {
             this.applyMobileState();
         });
@@ -688,7 +1097,6 @@ class MarketingAgentApp {
         if (this.isMobile()) {
             this.switchPanel(this.activePanel);
         } else {
-            // Desktop: ensure both panels are visible
             this.chatPanel.classList.remove('mobile-hidden');
             this.pipelinePanel.classList.remove('mobile-hidden');
         }
@@ -696,20 +1104,15 @@ class MarketingAgentApp {
 
     switchPanel(panelName) {
         this.activePanel = panelName;
-
-        // Update tabs
         if (this.mobileTabs) {
             const tabs = this.mobileTabs.querySelectorAll('.mobile-tab');
             tabs.forEach(tab => {
                 tab.classList.toggle('active', tab.dataset.panel === panelName);
             });
         }
-
-        // Show/hide panels
         if (panelName === 'chat') {
             this.chatPanel.classList.remove('mobile-hidden');
             this.pipelinePanel.classList.add('mobile-hidden');
-            // Give browser frame to compute layout
             setTimeout(() => {
                 if (!this.isUserInteracting) {
                     this.scrollToBottom();
@@ -718,18 +1121,6 @@ class MarketingAgentApp {
         } else {
             this.chatPanel.classList.add('mobile-hidden');
             this.pipelinePanel.classList.remove('mobile-hidden');
-        }
-    }
-
-    autoSwitchToPipeline() {
-        if (this.isMobile() && this.activePanel === 'chat') {
-            this.switchPanel('pipeline');
-        }
-    }
-
-    autoSwitchToChat() {
-        if (this.isMobile() && this.activePanel === 'pipeline') {
-            this.switchPanel('chat');
         }
     }
 
@@ -753,7 +1144,6 @@ class MarketingAgentApp {
             this.forceScrollToBottom();
             return;
         }
-        // Auto-scroll if user is near bottom
         const distFromBottom = this.chatHistory.scrollHeight - this.chatHistory.scrollTop - this.chatHistory.clientHeight;
         if (distFromBottom < 300) {
             requestAnimationFrame(() => {
@@ -773,7 +1163,7 @@ class MarketingAgentApp {
     }
 
     async showScoreHistory() {
-        this.modal.classList.remove('hidden');
+        this.scoreModal.classList.remove('hidden');
         const tbody = document.getElementById('historyTableBody');
 
         try {
