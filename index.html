@@ -2,7 +2,10 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover, interactive-widget=resizes-content">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="theme-color" content="#1d4ed8">
     <meta name="description" content="Millibro Marketing Agent Studio — Autonomous multi-agent AI marketing system for high-converting content and viral campaigns.">
     <title>Millibro Marketing Agent | 3D Autonomous Studio</title>
     <!-- Google Fonts: Poppins & Plus Jakarta Sans & Instrument Serif -->
@@ -50,7 +53,7 @@
                         <line x1="12" y1="5" x2="12" y2="19"></line>
                         <line x1="5" y1="12" x2="19" y2="12"></line>
                     </svg>
-                    <span>New Campaign</span>
+                    <span class="btn-text">New Campaign</span>
                 </button>
 
                 <!-- Saved Chats Button -->
@@ -58,7 +61,7 @@
                     <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                         <path d="M21 15a2 2 0 01-2 2H7l-4 4V5a2 2 0 012-2h14a2 2 0 012 2z"></path>
                     </svg>
-                    <span>Saved Chats</span>
+                    <span class="btn-text">Saved Chats</span>
                     <span class="chats-count-badge" id="savedChatsCount">0</span>
                 </button>
 
@@ -76,7 +79,7 @@
                         <circle cx="12" cy="12" r="10"></circle>
                         <polyline points="12 6 12 12 16 14"></polyline>
                     </svg>
-                    <span>Score History</span>
+                    <span class="btn-text">Score History</span>
                 </button>
             </div>
         </header>
@@ -84,17 +87,25 @@
         <!-- Mobile Navigation Tabs (≤980px) -->
         <nav class="mobile-tabs" id="mobileTabs" aria-label="Mobile Navigation">
             <button class="mobile-tab active" data-panel="chat" id="tabChat" type="button">
-                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                     <path d="M21 15a2 2 0 01-2 2H7l-4 4V5a2 2 0 012-2h14a2 2 0 012 2z"></path>
                 </svg>
-                <span>Marketing Studio</span>
+                <span>Studio</span>
             </button>
             <button class="mobile-tab" data-panel="pipeline" id="tabPipeline" type="button">
-                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                     <path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z"></path>
                 </svg>
-                <span>Agent Pipeline</span>
+                <span>Pipeline</span>
                 <span class="tab-badge" id="pipelineBadge"></span>
+            </button>
+            <button class="mobile-tab" data-panel="metrics" id="tabMetrics" type="button">
+                <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <circle cx="12" cy="12" r="10"></circle>
+                    <polyline points="12 6 12 12 16 14"></polyline>
+                </svg>
+                <span>Evaluation</span>
+                <span class="tab-badge" id="metricsBadge"></span>
             </button>
         </nav>
 
@@ -284,7 +295,7 @@
                     </section>
 
                     <!-- Right: Performance HUD & Live Gauge -->
-                    <aside class="hud-metrics-column">
+                    <aside class="hud-metrics-column hud-panel">
                         <div class="hud-header-title">Campaign Evaluation</div>
                         
                         <div id="scoreDisplay" class="score-display hidden">
@@ -406,7 +417,7 @@
                     <p class="modal-subtitle">Pick up where you left off or start a new campaign</p>
                 </div>
                 <div class="modal-header-actions">
-                    <button id="modalNewChatBtn" class="modal-cta-btn" type="button">+ New Campaign</button>
+                    <button id="modalNewChatBtn" class="modal-cta-btn" type="button">+ New</button>
                     <button id="closeSavedChatsModalBtn" class="icon-btn" type="button" aria-label="Close Modal">✕</button>
                 </div>
             </div>

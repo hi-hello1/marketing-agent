@@ -27,7 +27,9 @@ class MarketingAgentApp {
         this.mobileTabs = document.getElementById('mobileTabs');
         this.chatPanel = document.querySelector('.chat-panel');
         this.pipelinePanel = document.querySelector('.pipeline-panel');
+        this.hudPanel = document.querySelector('.hud-metrics-column');
         this.pipelineBadge = document.getElementById('pipelineBadge');
+        this.metricsBadge = document.getElementById('metricsBadge');
         this.activePanel = 'chat';
 
         this.isProcessing = false;
@@ -53,6 +55,7 @@ class MarketingAgentApp {
         window.addEventListener('orientationchange', () => setTimeout(updateHeight, 200));
         if (window.visualViewport) {
             window.visualViewport.addEventListener('resize', updateHeight);
+            window.visualViewport.addEventListener('scroll', updateHeight);
         }
     }
 
@@ -87,7 +90,16 @@ class MarketingAgentApp {
         this.userInput.addEventListener('input', () => {
             this.sendBtn.disabled = this.userInput.value.trim() === '' || this.isProcessing;
             this.userInput.style.height = 'auto';
-            this.userInput.style.height = Math.min(this.userInput.scrollHeight, 160) + 'px';
+            const maxHeight = this.isMobile() ? 110 : 160;
+            this.userInput.style.height = Math.min(this.userInput.scrollHeight, maxHeight) + 'px';
+        });
+
+        this.userInput.addEventListener('focus', () => {
+            if (this.isMobile()) {
+                setTimeout(() => {
+                    this.forceScrollToBottom();
+                }, 300);
+            }
         });
 
         // Score modal
@@ -366,6 +378,9 @@ class MarketingAgentApp {
         this.renderWelcomeCard();
         this.resetPipeline();
 
+        const chips = document.querySelector('.starter-chips-carousel');
+        if (chips) chips.style.display = 'flex';
+
         if (this.savedChatsModal) {
             this.savedChatsModal.classList.add('hidden');
         }
@@ -463,6 +478,9 @@ class MarketingAgentApp {
     }
 
     renderWelcomeCard() {
+        const chips = document.querySelector('.starter-chips-carousel');
+        if (chips) chips.style.display = 'flex';
+
         const welcomeHtml = `
             <div class="chat-message agent welcome">
                 <div class="welcome-holo-banner">
@@ -776,6 +794,10 @@ class MarketingAgentApp {
         const reworkCount = data.rework_count || 0;
 
         this.showScore(score, reasoning, previousBest, breakdown, reworkCount);
+
+        if (this.metricsBadge && this.activePanel !== 'metrics') {
+            this.metricsBadge.className = 'tab-badge done active';
+        }
     }
 
     handleDone(data) {
@@ -1050,6 +1072,9 @@ class MarketingAgentApp {
         if (this.pipelineBadge) {
             this.pipelineBadge.className = 'tab-badge';
         }
+        if (this.metricsBadge) {
+            this.metricsBadge.className = 'tab-badge';
+        }
 
         this.pipelineSteps.forEach(step => {
             step.className = 'pipeline-step idle';
@@ -1097,8 +1122,9 @@ class MarketingAgentApp {
         if (this.isMobile()) {
             this.switchPanel(this.activePanel);
         } else {
-            this.chatPanel.classList.remove('mobile-hidden');
-            this.pipelinePanel.classList.remove('mobile-hidden');
+            if (this.chatPanel) this.chatPanel.classList.remove('mobile-hidden');
+            if (this.pipelinePanel) this.pipelinePanel.classList.remove('mobile-hidden');
+            if (this.hudPanel) this.hudPanel.classList.remove('mobile-hidden');
         }
     }
 
@@ -1110,17 +1136,28 @@ class MarketingAgentApp {
                 tab.classList.toggle('active', tab.dataset.panel === panelName);
             });
         }
-        if (panelName === 'chat') {
-            this.chatPanel.classList.remove('mobile-hidden');
-            this.pipelinePanel.classList.add('mobile-hidden');
-            setTimeout(() => {
-                if (!this.isUserInteracting) {
-                    this.scrollToBottom();
+        if (this.isMobile()) {
+            if (panelName === 'chat') {
+                if (this.chatPanel) this.chatPanel.classList.remove('mobile-hidden');
+                if (this.pipelinePanel) this.pipelinePanel.classList.add('mobile-hidden');
+                if (this.hudPanel) this.hudPanel.classList.add('mobile-hidden');
+                setTimeout(() => {
+                    if (!this.isUserInteracting) {
+                        this.scrollToBottom();
+                    }
+                }, 60);
+            } else if (panelName === 'pipeline') {
+                if (this.chatPanel) this.chatPanel.classList.add('mobile-hidden');
+                if (this.pipelinePanel) this.pipelinePanel.classList.remove('mobile-hidden');
+                if (this.hudPanel) this.hudPanel.classList.add('mobile-hidden');
+            } else if (panelName === 'metrics') {
+                if (this.chatPanel) this.chatPanel.classList.add('mobile-hidden');
+                if (this.pipelinePanel) this.pipelinePanel.classList.add('mobile-hidden');
+                if (this.hudPanel) this.hudPanel.classList.remove('mobile-hidden');
+                if (this.metricsBadge) {
+                    this.metricsBadge.className = 'tab-badge';
                 }
-            }, 60);
-        } else {
-            this.chatPanel.classList.add('mobile-hidden');
-            this.pipelinePanel.classList.remove('mobile-hidden');
+            }
         }
     }
 
